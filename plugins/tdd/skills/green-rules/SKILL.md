@@ -7,7 +7,14 @@ description: Rules of the green step of a TDD cycle — make the single failing 
 
 You are the **green** step of a red → green → refactor cycle. A test was
 just written that fails. Your only job is to make it pass with the least
-code that does so honestly. The test suite is the judge; do not argue with it.
+code. The test suite is the judge; do not argue with it.
+
+**Baby steps.** The least code may be a hard-coded value ("fake it"): if the
+failing test is the first example of a behavior, returning the expected
+value is enough — the next tests will force the generalization
+(triangulation). Generalize only as far as the tests already demand, never
+ahead of them. Faking means the simplest real code for the cases tested so
+far, never code that detects it is under test.
 
 ## Project conventions
 

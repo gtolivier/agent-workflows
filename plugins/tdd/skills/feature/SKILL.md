@@ -11,7 +11,11 @@ subagent (`red`, `green`, `refactor` — in Claude Code, `tdd:red`, `tdd:green`,
 `tdd:refactor`), check what it did, and keep the history.
 
 When delegating, **never override the subagent's model**: each definition
-picks the model suited to its step.
+picks the model suited to its step. Run each subagent **in the foreground**
+when the environment allows it, and wait for its report within your turn (in
+Claude Code this needs fork mode off: `CLAUDE_CODE_FORK_SUBAGENT=0`). When a
+subagent runs in the background instead, set `Status: waiting — <which step>`
+before ending your turn (see step 3).
 
 ## 1. Preconditions and conventions
 
@@ -40,6 +44,16 @@ Read the relevant code, tests and any specification or reference the user
 pointed to. Split the feature into **behaviors**: each one observable, each
 one specified by exactly one test, ordered so that each builds on what is
 already green (leaves before the code that uses them).
+
+**Baby steps.** Each behavior is the smallest observable increment — one
+case, one example — that a handful of lines can make pass. Prefer several
+small behaviors to one broad one. Within a unit, order them from the
+simplest to the most general, for instance with ZOMBIES: Zero (empty or
+degenerate case), One, Many, Boundaries, Interfaces, Exceptions, keeping
+Simple scenarios first. Whenever a behavior generalizes (from one case to
+many, from a fixed value to a computed one), give it its own example: the
+green step may fake the simplest case, and the next example forces the
+generalization (triangulation).
 
 Write them as a checklist in `<git-dir>/tdd/<slug>.md`, `<git-dir>` being
 the output of `git rev-parse --git-dir`, in exactly this shape:
@@ -93,29 +107,41 @@ content nor where it is. Beyond that, each step gets only what it needs:
 | `green` | only "make the failing test pass" | the behavior sentence, the reference, the other behaviors: the test is its only specification, so that it implements the test and not a sentence |
 | `refactor` | only "improve this cycle's changes" | the behavior sentence, the other behaviors |
 
-For each behavior:
+For each behavior, **commit after every step** — `red: <behavior>`,
+`green: <behavior>`, `refactor: <what changed>` — so that each commit shows
+one step and can be checked against its write zone (`git show --stat`):
 
 1. **Red.** Delegate to `red`. Then check:
    - `git status --porcelain`: only test files changed;
    - run the test command yourself: the new test is the only failure, for
      the reason the report states — or its file or package fails to load
      (import error, compile error) on the missing symbol alone.
-2. **Green.** Delegate to `green`. Then check: no test file changed, and the
-   full suite and the linter (if any) are clean.
-3. **Refactor.** Delegate to `refactor`. Then check: no test file changed,
-   and the full suite and the linter (if any) are clean.
-4. **Commit** the cycle — one commit per behavior, message = the behavior —
-   and tick it in the checklist (`- [x]`).
 
-**When a check fails**, restore only the out-of-zone paths
-(`git restore` / `git clean` on those paths), then rerun the same subagent
-once with a reminder of its write zone. A second violation stops the loop.
+   Commit `red: <behavior>`.
+2. **Green.** Delegate to `green`. Then check: no test file changed, and the
+   full suite and the linter (if any) are clean. Commit `green: <behavior>`.
+
+   **Size signal.** If green needed more than a handful of lines of
+   production code, or several files, the behavior was too big. Note it,
+   and before the next behavior check whether the remaining ones should be
+   split — propose the split to the user rather than changing the list
+   silently.
+3. **Refactor.** Delegate to `refactor`. Then check: no test file changed,
+   and the full suite and the linter (if any) are clean. If it changed
+   anything, commit `refactor: <what changed>`; "nothing to refactor"
+   makes no commit.
+4. **Tick** the behavior in the checklist (`- [x]`).
+
+**When a check fails**, discard the subagent's changes to out-of-zone paths
+(`git restore` / `git clean` on those paths — the previous step is
+committed, so nothing else is lost), then rerun the same subagent once with
+a reminder of its write zone. A second violation stops the loop.
 
 **When a subagent does not report success:**
 
 | Report | Action |
 |---|---|
-| `red` → `ALREADY_GREEN` | Keep the test, commit it, note it for the final review. |
+| `red` → `ALREADY_GREEN` | Keep the test, commit it (`red: <behavior> (already green)`), skip green and refactor, note it for the final review. |
 | `red` → `REFUSED` (ambiguous behavior) | Stop and ask the user. |
 | `green` → `REFUSED` (test looks wrong) | Send the explanation back to `red` once. If it persists, stop and ask. |
 | `refactor` → `REFUSED` | The suite was not green: that is a bug in the previous step. Stop and report. |

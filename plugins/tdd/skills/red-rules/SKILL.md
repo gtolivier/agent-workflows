@@ -44,9 +44,12 @@ file, not a build or config file.
 ## Exit criterion
 
 - The new test fails, **and**
-- its failure is caused by the missing behavior: a failed assertion, or a
+- its failure is caused by the missing behavior: a failed assertion; a
   missing-symbol error — an import error, an undefined name, a compile
-  error — on precisely the name the test is about, **and**
+  error — on precisely the name the test is about; or a call the current
+  signature does not accept yet — an unexpected argument, a wrong number of
+  arguments (a `TypeError` in Python) — on precisely the function the test
+  is about, **and**
 - every other test still passes.
 
 **When the missing symbol keeps the test file from loading** — a Python

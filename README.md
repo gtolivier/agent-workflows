@@ -42,12 +42,28 @@ Run a feature with:
 
 The skill creates a `feature/<slug>` branch, proposes a list of behaviors
 (one test each) and waits for your approval, then runs one cycle per
-behavior — one commit each — without interrupting you. Once the feature is
+behavior without interrupting you, with one commit per step (`red: …`,
+`green: …`, `refactor: …`) so that each step can be checked on its own.
+Once the feature is
 complete, it opens a pull request, lets CI and review bots run alongside an
 independent review, triages their comments and yours (fix, propose, or
 reply why not) — anyone else's are reported to you, not acted on — and only
 then asks for your approval. Nothing is merged without it; the merge is a
 squash, one commit per feature.
+
+**Baby steps.** Each behavior is the smallest observable increment, ordered
+from the simplest case to the most general (Zero, One, Many, Boundaries,
+Interfaces, Exceptions). The green step may fake the first example with a
+hard-coded value; the next example forces the generalization. When a green
+step still needs a lot of code, the skill proposes to split the remaining
+behaviors.
+
+**Foreground subagents.** The cycle runs smoothest when each subagent runs
+in the foreground and returns its report within the turn. Claude Code's fork
+mode, on by default in interactive sessions, runs every subagent in the
+background; set `CLAUDE_CODE_FORK_SUBAGENT=0` (for instance in the project's
+`.claude/settings.local.json`, under `env`) to turn it off. Without it, the
+loop still works: the skill marks each wait in its checklist.
 
 **Ralph loop.** A Stop hook keeps a running feature going. The skill keeps a
 `Status:` line at the top of its checklist; while it says `running`, the hook
@@ -66,7 +82,8 @@ any, and where test files live — a test directory, or a naming pattern next
 to the code such as `*_test.go` or `*.test.ts`. Stating them in `AGENTS.md`
 makes them unambiguous. A test file that fails to load — an import error, a
 compile error — because the symbol it tests does not exist yet counts as a
-valid red.
+valid red, and so does a call the function's current signature does not
+accept yet.
 
 ## Portability
 
