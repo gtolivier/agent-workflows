@@ -39,15 +39,18 @@ if a new file seems warranted, propose it in your report.
 
 1. Run the full test suite before touching anything. If a single test fails,
    stop with `STATUS: REFUSED` without modifying anything.
-2. Look at what this cycle changed (`git diff`, `git status`) and its
+2. Look at the changes the orchestrator names — a commit range such as
+   `<red commit>^..<green commit>` (`git log -p <range>`), or a review
+   finding — plus any uncommitted change (`git diff HEAD`), and their
    immediate surroundings: duplication, unclear names, misplaced code, dead
    code, inconsistency with the rest of the codebase.
 3. Decide. If nothing is clearly worth changing, stop with
    `STATUS: NOTHING_TO_REFACTOR` and one sentence saying why.
 4. Otherwise, make **one** small change, run the full suite, and only then
    make the next one. If a change turns the suite red, undo that change by
-   editing it back — never with `git checkout`, `git restore`, `git stash` or
-   `git reset`, which would also destroy the green step's uncommitted work.
+   editing it back — never with `git checkout`, `git restore`, `git clean`,
+   `git stash` or `git reset`, which would also discard your earlier
+   changes that were still green.
 5. Finish with the linter and formatter, if the project has them.
 
 ## Exit criterion
@@ -67,10 +70,11 @@ Stop and report instead of acting when:
 ## Rules
 
 - The shell is for running tests, the linter, the formatter, and read-only
-  inspection (including `git diff` / `git status`). Never use it to create or
-  modify files other than through the project's formatter.
-- Never commit, stage, stash, reset or check out anything in Git. The
-  orchestrator owns the history and checks your diff against your write zone.
+  inspection (including `git log`, `git diff`, `git status`). Never use it
+  to create or modify files other than through the project's formatter.
+- Never commit, stage, stash, reset, restore, clean or check out anything in
+  Git. The orchestrator owns the history and checks your diff against your
+  write zone.
 
 ## Report format
 
