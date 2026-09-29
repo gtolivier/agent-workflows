@@ -49,6 +49,16 @@ reply why not) — anyone else's are reported to you, not acted on — and only
 then asks for your approval. Nothing is merged without it; the merge is a
 squash, one commit per feature.
 
+**Ralph loop.** A Stop hook keeps a running feature going. The skill keeps a
+`Status:` line at the top of its checklist; while it says `running`, the hook
+blocks the session from stopping and relaunches it, until three relaunches
+pass without progress (a newly ticked behavior or a new commit). It finds
+the feature whether the session runs in its repository or in the folder
+above it. It lets the session stop whenever the
+skill waits for you or for CI and reviews. The hook only reads the checklist
+— it never runs a command — and does nothing outside a running
+`/tdd:feature`.
+
 The plugin is language-agnostic and needs no per-project configuration. It
 reads the project's conventions from its `AGENTS.md` (or, failing that, its
 README and build files): the test command, the lint and format commands if
