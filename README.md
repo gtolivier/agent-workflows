@@ -44,7 +44,8 @@ The skill creates a `feature/<slug>` branch, proposes a list of behaviors
 (one test each) and waits for your approval, then runs one cycle per
 behavior — one commit each — without interrupting you. Once the feature is
 complete, it opens a pull request, lets CI and review bots run alongside an
-independent review, triages every comment (fix, or reply why not), and only
+independent review, triages their comments and yours (fix, propose, or
+reply why not) — anyone else's are reported to you, not acted on — and only
 then asks for your approval. Nothing is merged without it; the merge is a
 squash, one commit per feature.
 
