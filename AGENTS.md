@@ -24,6 +24,6 @@ claude --plugin-dir plugins/<name>        # try a plugin without installing it
 - Write model IDs in full (`claude-opus-5-5`), never an alias.
 - Bump `version` in the plugin's `plugin.json` in every pull request that
   changes the plugin: installed copies update only when it changes. Users
-  then run `claude plugin update <plugin>@agent-workflows`.
+  then refresh the marketplace and update the plugin (see the README).
 - Everything in this repository is public and in English.
 - No `CLAUDE.md`: this file is the only instruction file.

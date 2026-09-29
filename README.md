@@ -10,6 +10,14 @@ claude plugin marketplace add gtolivier/agent-workflows
 claude plugin install tdd@agent-workflows
 ```
 
+To update, refresh the marketplace, then the plugin, and restart Claude
+Code:
+
+```sh
+claude plugin marketplace update agent-workflows
+claude plugin update tdd@agent-workflows
+```
+
 ## Plugins
 
 ### `tdd` — test-driven development, one feature at a time
