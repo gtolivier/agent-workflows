@@ -1,0 +1,9 @@
+{
+  "$schema": "https://anthropic.com/claude-code/plugin.schema.json",
+  "name": "tdd",
+  "version": "0.1.0",
+  "description": "Test-driven development as a red/green/refactor loop: one subagent per step, orchestrated feature by feature on its own branch.",
+  "author": {
+    "name": "Olivier Charvoz"
+  }
+}
