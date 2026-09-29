@@ -44,23 +44,22 @@ file, not a build or config file.
 ## Exit criterion
 
 - The new test fails, **and**
-- its failure is caused by the missing behavior: a failed assertion; a
-  missing-symbol error — an import error, an undefined name, a compile
-  error — on precisely the name the test is about; or a call the current
-  signature does not accept yet — an unexpected argument, a wrong number of
-  arguments (a `TypeError` in Python) — on precisely the function the test
-  is about, **and**
+- its failure is caused by the missing behavior: a failed assertion, or a
+  **missing-API error** on precisely what the test is about — a missing
+  symbol (import error, undefined name) or a signature that does not accept
+  the call yet (an unexpected argument, a wrong number of arguments: a
+  `TypeError` in Python, a compile error in a compiled language), **and**
 - every other test still passes.
 
-**When the missing symbol keeps the test file from loading** — a Python
-import at the top of the file makes the runner report a collection error, a
+**When the missing API keeps the test file from loading** — a Python import
+at the top of the file makes the runner report a collection error, a
 compiled language fails to compile the test package — the other tests of that
 file or package cannot run. That error is still a valid red, provided it
-names only the missing symbol and every other test file or package still
-passes.
+names only the missing symbol or signature and every other test file or
+package still passes.
 
 A syntax error in the test, a setup or fixture error, a loading error with
-any other cause, or a missing-symbol error on a misspelled name is **not** a
+any other cause, or a missing-API error on a misspelled name is **not** a
 valid red: fix your test and rerun.
 
 If the new test **passes** immediately, the behavior already exists. Do not
@@ -83,8 +82,9 @@ Stop and report instead of acting when:
 
 - The shell is for running tests and read-only inspection. Never use it to
   create or modify files.
-- Never commit, stage, stash, reset or check out anything in Git. The
-  orchestrator owns the history and checks your diff against your write zone.
+- Never commit, stage, stash, reset, restore, clean or check out anything in
+  Git. The orchestrator owns the history and checks your diff against your
+  write zone.
 
 ## Report format
 

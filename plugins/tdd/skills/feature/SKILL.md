@@ -50,10 +50,11 @@ case, one example — that a handful of lines can make pass. Prefer several
 small behaviors to one broad one. Within a unit, order them from the
 simplest to the most general, for instance with ZOMBIES: Zero (empty or
 degenerate case), One, Many, Boundaries, Interfaces, Exceptions, keeping
-Simple scenarios first. Whenever a behavior generalizes (from one case to
-many, from a fixed value to a computed one), give it its own example: the
-green step may fake the simplest case, and the next example forces the
-generalization (triangulation).
+Simple scenarios first. The green step may fake a behavior with a
+hard-coded value, so **every unit's list must end with a behavior no
+constant can satisfy**: whenever a behavior generalizes (from one case to
+many, from a fixed value to a computed one), give it a second example that
+forces the generalization (triangulation).
 
 Write them as a checklist in `<git-dir>/tdd/<slug>.md`, `<git-dir>` being
 the output of `git rev-parse --git-dir`, in exactly this shape:
@@ -73,8 +74,9 @@ committed, and it stays out of the subagents' way — they must not learn the
 behaviors still to come.
 
 Show the list to the user and **wait for their approval**. Adjust it until
-they approve, then set `Status: running`. This is the only interruption
-before the feature is complete.
+they approve, then set `Status: running`. This is the only planned
+interruption before the feature is complete; the others are the stop
+conditions of step 5.
 
 **The `Status:` line** is the checklist's first line, and it says whether
 stopping is expected:
@@ -105,27 +107,30 @@ content nor where it is. Beyond that, each step gets only what it needs:
 |---|---|---|
 | `red` | the behavior sentence, the relevant paths, the reference behavior if any | the other behaviors |
 | `green` | only "make the failing test pass" | the behavior sentence, the reference, the other behaviors: the test is its only specification, so that it implements the test and not a sentence |
-| `refactor` | only "improve this cycle's changes" | the behavior sentence, the other behaviors |
+| `refactor` | only "improve this cycle's changes", with the cycle's commit range (`<red commit>^..<green commit>`) | the behavior sentence, the other behaviors |
 
 For each behavior, **commit after every step** — `red: <behavior>`,
 `green: <behavior>`, `refactor: <what changed>` — so that each commit shows
-one step and can be checked against its write zone (`git show --stat`):
+one step and can be checked against its write zone (`git show --stat`). If
+a commit hook rejects a `red:` commit because the suite is red, never bypass
+it (no `--no-verify`): for this feature, commit red and green together as
+`red+green: <behavior>`, and say so in the PR description.
 
 1. **Red.** Delegate to `red`. Then check:
    - `git status --porcelain`: only test files changed;
    - run the test command yourself: the new test is the only failure, for
      the reason the report states — or its file or package fails to load
-     (import error, compile error) on the missing symbol alone.
+     (import error, compile error) on the missing symbol or signature alone.
 
    Commit `red: <behavior>`.
 2. **Green.** Delegate to `green`. Then check: no test file changed, and the
    full suite and the linter (if any) are clean. Commit `green: <behavior>`.
 
    **Size signal.** If green needed more than a handful of lines of
-   production code, or several files, the behavior was too big. Note it,
-   and before the next behavior check whether the remaining ones should be
-   split — propose the split to the user rather than changing the list
-   silently.
+   production code, or several files, the behavior was too big and the
+   remaining ones probably are too. Finish this cycle, then stop (step 5)
+   and propose a split of the remaining behaviors to the user rather than
+   changing the list silently.
 3. **Refactor.** Delegate to `refactor`. Then check: no test file changed,
    and the full suite and the linter (if any) are clean. If it changed
    anything, commit `refactor: <what changed>`; "nothing to refactor"
@@ -143,7 +148,7 @@ a reminder of its write zone. A second violation stops the loop.
 |---|---|
 | `red` → `ALREADY_GREEN` | Keep the test, commit it (`red: <behavior> (already green)`), skip green and refactor, note it for the final review. |
 | `red` → `REFUSED` (ambiguous behavior) | Stop and ask the user. |
-| `green` → `REFUSED` (test looks wrong) | Send the explanation back to `red` once. If it persists, stop and ask. |
+| `green` → `REFUSED` (test looks wrong) | Undo the `red:` commit with `git revert --no-edit HEAD` (the suite is green again), then send the explanation back to `red` once; its new test gets a new `red:` commit. If it persists, stop and ask. |
 | `refactor` → `REFUSED` | The suite was not green: that is a bug in the previous step. Stop and report. |
 
 ## 5. Stop conditions
@@ -154,14 +159,18 @@ Hand back to the user — after setting `Status: waiting-for-user — <reason>`
 - every behavior is checked (go to step 6);
 - a subagent refuses twice, or asks a question only the user can answer;
 - three attempts on the same behavior failed;
-- the list turns out to be wrong — a behavior is missing or impossible. Do
-  not change the approved list silently: propose the change.
+- the list turns out to be wrong — a behavior is missing, impossible, or
+  too big (the size signal of step 4). Do not change the approved list
+  silently: propose the change.
 
 These conditions keep applying during the triage of step 6.
 
 ## 6. Pull request and reviews
 
-With the full suite and the linter (if any) clean:
+With the full suite and the linter (if any) clean, first **look for leftover
+fakes**: read the feature's production code for hard-coded values that only
+satisfy one tested example. Each one means a missing triangulating behavior:
+stop (step 5) and propose it to the user. Then:
 
 1. **Check before publishing.** Pushing publishes the branch, on a public
    repository to everyone. Read `git diff <default-branch>...HEAD` for
