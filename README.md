@@ -43,8 +43,9 @@ reads the project's conventions from its `AGENTS.md` (or, failing that, its
 README and build files): the test command, the lint and format commands if
 any, and where test files live — a test directory, or a naming pattern next
 to the code such as `*_test.go` or `*.test.ts`. Stating them in `AGENTS.md`
-makes them unambiguous. In compiled languages, a test that does not compile
-because the symbol it tests does not exist yet counts as a valid red.
+makes them unambiguous. A test file that fails to load — an import error, a
+compile error — because the symbol it tests does not exist yet counts as a
+valid red.
 
 ## Portability
 

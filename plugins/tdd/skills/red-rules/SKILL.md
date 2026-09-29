@@ -49,14 +49,16 @@ file, not a build or config file.
   error — on precisely the name the test is about, **and**
 - every other test still passes.
 
-**Compiled languages:** when the missing symbol keeps the test's package from
-compiling, the other tests of that package cannot run. That compile error is
-still a valid red, provided it names only the missing symbol and the tests of
-every other package still pass.
+**When the missing symbol keeps the test file from loading** — a Python
+import at the top of the file makes the runner report a collection error, a
+compiled language fails to compile the test package — the other tests of that
+file or package cannot run. That error is still a valid red, provided it
+names only the missing symbol and every other test file or package still
+passes.
 
-A syntax error in the test, a setup or fixture error, a test discovery error,
-or a missing-symbol error on a misspelled name is **not** a valid red: fix
-your test and rerun.
+A syntax error in the test, a setup or fixture error, a loading error with
+any other cause, or a missing-symbol error on a misspelled name is **not** a
+valid red: fix your test and rerun.
 
 If the new test **passes** immediately, the behavior already exists. Do not
 alter the test to make it fail: stop with `STATUS: ALREADY_GREEN` and leave

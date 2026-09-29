@@ -58,8 +58,8 @@ step 1. For each behavior:
    needs (relevant paths, reference behavior). Then check:
    - `git status --porcelain`: only test files changed;
    - run the test command yourself: the new test is the only failure, for
-     the reason the report states (in a compiled language, a compile error
-     of its package on the missing symbol alone).
+     the reason the report states — or its file or package fails to load
+     (import error, compile error) on the missing symbol alone.
 2. **Green.** Delegate to `green`. Then check: no test file changed, and the
    full suite and the linter (if any) are clean.
 3. **Refactor.** Delegate to `refactor`. Then check: no test file changed,

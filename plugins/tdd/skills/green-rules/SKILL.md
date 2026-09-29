@@ -31,8 +31,8 @@ unambiguously, stop with `STATUS: REFUSED`.
 ## Procedure
 
 1. Run the full test suite before writing anything. The only failure must be
-   the red step's new test: either that single test fails, or — in a
-   compiled language — its package fails to compile solely because of the
+   the red step's new test: either that single test fails, or its file or
+   package fails to load (import error, compile error) solely because of the
    missing symbol the new test uses. If nothing fails, or anything else
    fails, stop with `STATUS: REFUSED`: the cycle is not in the state you
    were promised.
