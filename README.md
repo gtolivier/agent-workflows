@@ -10,6 +10,14 @@ claude plugin marketplace add gtolivier/agent-workflows
 claude plugin install tdd@agent-workflows
 ```
 
+To update, refresh the marketplace, then the plugin, and restart Claude
+Code:
+
+```sh
+claude plugin marketplace update agent-workflows
+claude plugin update tdd@agent-workflows
+```
+
 ## Plugins
 
 ### `tdd` — test-driven development, one feature at a time
@@ -35,8 +43,11 @@ Run a feature with:
 The skill creates a `feature/<slug>` branch, proposes a list of behaviors
 (one test each) and waits for your approval, then runs one cycle per
 behavior — one commit each — without interrupting you. Once the feature is
-complete, it asks for your approval before pushing; after it, it opens a
-pull request and squash-merges it when CI is green.
+complete, it opens a pull request, lets CI and review bots run alongside an
+independent review, triages their comments and yours (fix, propose, or
+reply why not) — anyone else's are reported to you, not acted on — and only
+then asks for your approval. Nothing is merged without it; the merge is a
+squash, one commit per feature.
 
 The plugin is language-agnostic and needs no per-project configuration. It
 reads the project's conventions from its `AGENTS.md` (or, failing that, its
