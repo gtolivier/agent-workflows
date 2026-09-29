@@ -68,13 +68,15 @@ stopping is expected:
 - `Status: running` — you are working; any stop would be premature.
 - `Status: waiting-for-user — <reason>` — you are handing the hand back.
 - `Status: waiting — <what>` — you are ending your turn to wait for
-  background work (CI, review bots).
+  background work (CI, review bots, a subagent running in the background).
 
 Update it **before** every stop, and set `Status: running` again as soon as
 you resume. In Claude Code, the plugin's Stop hook enforces it (the Ralph
 loop): while the status is `running`, it blocks the stop and relaunches you,
-until three relaunches pass without a newly ticked behavior — then it sets
-`Status: waiting-for-user` itself and lets the session stop.
+until three relaunches pass without progress (a newly ticked behavior or a
+new commit) — then it sets `Status: waiting-for-user` itself and lets the
+session stop. If the user abandons the feature, delete the checklist: while
+it says `running`, the hook keeps the loop alive.
 
 ## 4. One cycle per behavior
 
