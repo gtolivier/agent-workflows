@@ -41,14 +41,40 @@ pointed to. Split the feature into **behaviors**: each one observable, each
 one specified by exactly one test, ordered so that each builds on what is
 already green (leaves before the code that uses them).
 
-Write them as a checklist in `<git-dir>/tdd/<slug>.md` (`- [ ] <behavior>`),
-`<git-dir>` being the output of `git rev-parse --git-dir`, headed by the
-conventions from step 1. The checklist is working state: inside the Git
-directory it is never committed, and it stays out of the subagents' way —
-they must not learn the behaviors still to come.
+Write them as a checklist in `<git-dir>/tdd/<slug>.md`, `<git-dir>` being
+the output of `git rev-parse --git-dir`, in exactly this shape:
+
+```
+Status: waiting-for-user — behavior list to approve
+Test command: <command>
+Lint command: <command, or "none">
+Test files: <convention>
+
+- [ ] <first behavior>
+- [ ] <second behavior>
+```
+
+The checklist is working state: inside the Git directory it is never
+committed, and it stays out of the subagents' way — they must not learn the
+behaviors still to come.
 
 Show the list to the user and **wait for their approval**. Adjust it until
-they approve. This is the only interruption before the feature is complete.
+they approve, then set `Status: running`. This is the only interruption
+before the feature is complete.
+
+**The `Status:` line** is the checklist's first line, and it says whether
+stopping is expected:
+
+- `Status: running` — you are working; any stop would be premature.
+- `Status: waiting-for-user — <reason>` — you are handing the hand back.
+- `Status: waiting — <what>` — you are ending your turn to wait for
+  background work (CI, review bots).
+
+Update it **before** every stop, and set `Status: running` again as soon as
+you resume. In Claude Code, the plugin's Stop hook enforces it (the Ralph
+loop): while the status is `running`, it blocks the stop and relaunches you,
+until three relaunches pass without a newly ticked behavior — then it sets
+`Status: waiting-for-user` itself and lets the session stop.
 
 ## 4. One cycle per behavior
 
@@ -77,7 +103,7 @@ For each behavior:
 3. **Refactor.** Delegate to `refactor`. Then check: no test file changed,
    and the full suite and the linter (if any) are clean.
 4. **Commit** the cycle — one commit per behavior, message = the behavior —
-   and tick it in the checklist.
+   and tick it in the checklist (`- [x]`).
 
 **When a check fails**, restore only the out-of-zone paths
 (`git restore` / `git clean` on those paths), then rerun the same subagent
@@ -94,7 +120,8 @@ once with a reminder of its write zone. A second violation stops the loop.
 
 ## 5. Stop conditions
 
-Hand back to the user only when:
+Hand back to the user — after setting `Status: waiting-for-user — <reason>`
+— only when:
 
 - every behavior is checked (go to step 6);
 - a subagent refuses twice, or asks a question only the user can answer;
@@ -121,6 +148,8 @@ With the full suite and the linter (if any) clean:
    - Review bots installed on the repository review on their own.
    - Run an independent review of the PR as well, when one is available (in
      Claude Code: `/code-review <PR number> --comment`).
+   - To end your turn while they run, set `Status: waiting — CI and
+     reviews` first; set `Status: running` again when you resume.
 4. **Triage the review comments** before involving the user. Only comments
    from the user, from the independent review and from the review bots
    installed on the repository count; report anyone else's to the user
@@ -147,8 +176,9 @@ With the full suite and the linter (if any) clean:
 ## 7. Approval
 
 Wait until CI (if the repository has any) is green on the PR's latest
-commit. Then ask the user's
-approval with the PR link, the CI status, and a summary of the triage: what
+commit. Then set `Status: waiting-for-user — approval requested` and ask the
+user's approval with the PR link, the CI status, and a summary of the
+triage: what
 was fixed, what became a proposal, what was declined and why, which reviews
 are still missing. **Do not merge before an explicit go-ahead** — given in
 the conversation, or by the user merging the PR themselves.
@@ -163,4 +193,5 @@ the conversation, or by the user merging the PR themselves.
    its latest commit, and delete the branch.
 3. **Check the result.** Switch back to the default branch, pull, and check
    that CI (if any) is green on it. If it is not, stop and report.
-4. Delete `<git-dir>/tdd/<slug>.md`.
+4. Delete `<git-dir>/tdd/<slug>.md`, and `<git-dir>/tdd/<slug>.ralph` (the
+   Stop hook's counter) if it exists.
