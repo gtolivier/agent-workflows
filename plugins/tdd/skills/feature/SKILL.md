@@ -41,9 +41,11 @@ pointed to. Split the feature into **behaviors**: each one observable, each
 one specified by exactly one test, ordered so that each builds on what is
 already green (leaves before the code that uses them).
 
-Write them as a checklist in `.tdd/<slug>.md` (`- [ ] <behavior>`), headed by
-the conventions from step 1, and add `.tdd/` to `.git/info/exclude` if it is
-not there yet: the checklist is working state, never committed.
+Write them as a checklist in `<git-dir>/tdd/<slug>.md` (`- [ ] <behavior>`),
+`<git-dir>` being the output of `git rev-parse --git-dir`, headed by the
+conventions from step 1. The checklist is working state: inside the Git
+directory it is never committed, and it stays out of the subagents' way —
+they must not learn the behaviors still to come.
 
 Show the list to the user and **wait for their approval**. Adjust it until
 they approve. This is the only interruption before the feature is complete.
@@ -51,11 +53,21 @@ they approve. This is the only interruption before the feature is complete.
 ## 4. One cycle per behavior
 
 Work through the unchecked behaviors in order, without stopping to report
-between cycles. Every delegation message includes the conventions from
-step 1. For each behavior:
+between cycles.
 
-1. **Red.** Delegate to `red` with the behavior sentence and the context it
-   needs (relevant paths, reference behavior). Then check:
+**What each subagent is told.** Every delegation message includes the
+conventions from step 1, and nothing about the checklist — neither its
+content nor where it is. Beyond that, each step gets only what it needs:
+
+| Subagent | Told | Never told |
+|---|---|---|
+| `red` | the behavior sentence, the relevant paths, the reference behavior if any | the other behaviors |
+| `green` | only "make the failing test pass" | the behavior sentence, the reference, the other behaviors: the test is its only specification, so that it implements the test and not a sentence |
+| `refactor` | only "improve this cycle's changes" | the behavior sentence, the other behaviors |
+
+For each behavior:
+
+1. **Red.** Delegate to `red`. Then check:
    - `git status --porcelain`: only test files changed;
    - run the test command yourself: the new test is the only failure, for
      the reason the report states — or its file or package fails to load
@@ -109,4 +121,4 @@ Ask for approval. **Do not push anything before an explicit go-ahead.**
 2. Wait for CI. If it fails, stop and report — do not fix it silently.
 3. If CI is green: squash-merge (one commit per feature on the default
    branch), delete the branch, switch back to the default branch and pull.
-4. Delete `.tdd/<slug>.md`.
+4. Delete `<git-dir>/tdd/<slug>.md`.
