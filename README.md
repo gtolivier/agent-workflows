@@ -19,9 +19,9 @@ and the main session only orchestrates and checks.
 
 | Step | Subagent | Model | Writes | Stops when |
 |---|---|---|---|---|
-| Red | `tdd:red` | Opus 5.5, high effort | the test directory only | exactly one new test fails, for the right reason |
-| Green | `tdd:green` | Sonnet 5.5 | everything but tests | the full suite is green |
-| Refactor | `tdd:refactor` | Opus 5.5, high effort | everything but tests, existing files | the suite stayed green after every change — "nothing to refactor" is valid |
+| Red | `tdd:red` | Opus 5.5, high effort | test files only | exactly one new test fails, for the right reason |
+| Green | `tdd:green` | Sonnet 5.5 | everything but test files | the full suite is green |
+| Refactor | `tdd:refactor` | Opus 5.5, high effort | everything but test files, existing files only | the suite stayed green after every change — "nothing to refactor" is valid |
 
 The strongest model goes where the test suite cannot judge the work: nothing
 tells you a red test is the *right* test, or that a refactor was worth it.
@@ -38,9 +38,13 @@ behavior — one commit each — without interrupting you. Once the feature is
 complete, it asks for your approval before pushing; after it, it opens a
 pull request and squash-merges it when CI is green.
 
-The subagents read the test command from the project's `AGENTS.md` (or its
-README / `pyproject.toml`), so the plugin needs no per-project
-configuration: state the command there.
+The plugin is language-agnostic and needs no per-project configuration. It
+reads the project's conventions from its `AGENTS.md` (or, failing that, its
+README and build files): the test command, the lint and format commands if
+any, and where test files live — a test directory, or a naming pattern next
+to the code such as `*_test.go` or `*.test.ts`. Stating them in `AGENTS.md`
+makes them unambiguous. In compiled languages, a test that does not compile
+because the symbol it tests does not exist yet counts as a valid red.
 
 ## Portability
 

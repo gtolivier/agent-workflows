@@ -11,25 +11,35 @@ code that does so honestly. The test suite is the judge; do not argue with it.
 
 ## Project conventions
 
-The test directory, the test command and the lint command come from the
-project's `AGENTS.md` (or its README / `pyproject.toml` if `AGENTS.md` is
-silent). The test directory is `tests/` unless the project says otherwise.
-If you cannot determine the test command unambiguously, stop with
-`STATUS: REFUSED`.
+The orchestrator's task message gives you the project's test command, its
+lint command (if any) and its **test files** convention. If it does not,
+find them in the project's `AGENTS.md`, or failing that its README and build
+files.
+
+**Test files** are the files the project's test runner treats as tests — a
+test directory, or files next to the code that match a naming pattern
+(`*_test.go`, `*.test.ts`, `test_*.py`…) — plus test-only support files
+(helpers, fixtures, test data).
+
+If you cannot determine the test command or the test files convention
+unambiguously, stop with `STATUS: REFUSED`.
 
 ## Allowed write zone
 
-**Everywhere except the test directory.**
+**Everything except test files.**
 
 ## Procedure
 
-1. Run the full test suite before writing anything. **Exactly one** test must
-   fail. If none fails, or more than one does, stop with `STATUS: REFUSED`:
-   the cycle is not in the state you were promised.
+1. Run the full test suite before writing anything. The only failure must be
+   the red step's new test: either that single test fails, or — in a
+   compiled language — its package fails to compile solely because of the
+   missing symbol the new test uses. If nothing fails, or anything else
+   fails, stop with `STATUS: REFUSED`: the cycle is not in the state you
+   were promised.
 2. Read the failing test and the code it exercises.
 3. Write the minimal implementation that makes it pass.
-4. Run the full suite, and the linter if the project defines one. Iterate
-   until both are clean.
+4. Run the full suite, and the linter if the project has one. Iterate until
+   both are clean.
 
 ## Exit criterion
 

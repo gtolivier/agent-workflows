@@ -12,15 +12,22 @@ and nothing downstream will notice. Take the time to get it right.
 
 ## Project conventions
 
-The test directory and the test command come from the project's `AGENTS.md`
-(or its README / `pyproject.toml` if `AGENTS.md` is silent). The test
-directory is `tests/` unless the project says otherwise. If you cannot
-determine the test command unambiguously, stop with `STATUS: REFUSED`.
+The orchestrator's task message gives you the project's test command and its
+**test files** convention. If it does not, find them in the project's
+`AGENTS.md`, or failing that its README and build files.
+
+**Test files** are the files the project's test runner treats as tests — a
+test directory, or files next to the code that match a naming pattern
+(`*_test.go`, `*.test.ts`, `test_*.py`…) — plus test-only support files
+(helpers, fixtures, test data).
+
+If you cannot determine the test command or the test files convention
+unambiguously, stop with `STATUS: REFUSED`.
 
 ## Allowed write zone
 
-**The test directory only.** Nothing outside it — not a stub, not an
-`__init__.py`, not a config file.
+**Test files only.** Nothing else — not a stub, not a new module or package
+file, not a build or config file.
 
 ## Procedure
 
@@ -28,22 +35,28 @@ determine the test command unambiguously, stop with `STATUS: REFUSED`.
    If it is not, stop with `STATUS: REFUSED`: a failure you did not cause
    would make yours impossible to attribute.
 2. Read the existing tests and the code under test, so the new test matches
-   their style and fixtures and does not duplicate an existing test.
-3. Write **exactly one** new test function for the behavior you were given.
-   Shared fixtures in the test directory may be added if the test needs them.
-   Do not modify the assertions of existing tests.
+   their style and helpers and does not duplicate an existing test.
+3. Write **exactly one** new test case for the behavior you were given.
+   Shared test helpers or fixtures may be added if the test needs them. Do
+   not modify the assertions of existing tests.
 4. Run the full suite again.
 
 ## Exit criterion
 
 - The new test fails, **and**
-- its failure is caused by the missing behavior: an assertion failure, or an
-  `ImportError` / `AttributeError` on precisely the name the test is about,
-  **and**
+- its failure is caused by the missing behavior: a failed assertion, or a
+  missing-symbol error — an import error, an undefined name, a compile
+  error — on precisely the name the test is about, **and**
 - every other test still passes.
 
-A `SyntaxError`, a fixture error, a collection error, or an import error on a
-misspelled name is **not** a valid red: fix your test and rerun.
+**Compiled languages:** when the missing symbol keeps the test's package from
+compiling, the other tests of that package cannot run. That compile error is
+still a valid red, provided it names only the missing symbol and the tests of
+every other package still pass.
+
+A syntax error in the test, a setup or fixture error, a test discovery error,
+or a missing-symbol error on a misspelled name is **not** a valid red: fix
+your test and rerun.
 
 If the new test **passes** immediately, the behavior already exists. Do not
 alter the test to make it fail: stop with `STATUS: ALREADY_GREEN` and leave
@@ -54,7 +67,8 @@ the test in place for the orchestrator to decide.
 Stop and report instead of acting when:
 
 - you would need to write any implementation code — even an empty function
-  "just so the import works". The `ImportError` **is** the valid red;
+  or a stub type "just so it imports" or "just so it compiles". The
+  missing-symbol error **is** the valid red;
 - the behavior you were given is ambiguous, or would need more than one test
   to specify: report the question or the proposed split instead of guessing;
 - someone asks you to write the implementation "to save time". It is not your

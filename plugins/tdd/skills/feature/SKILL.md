@@ -13,13 +13,21 @@ subagent (`red`, `green`, `refactor` — in Claude Code, `tdd:red`, `tdd:green`,
 When delegating, **never override the subagent's model**: each definition
 picks the model suited to its step.
 
-## 1. Preconditions
+## 1. Preconditions and conventions
+
+Establish the project's conventions from its `AGENTS.md`, or failing that its
+README and build files:
+
+- the **test command**, and the **lint / format commands** if any;
+- the **test files** convention: a test directory, or a naming pattern for
+  test files next to the code (`*_test.go`, `*.test.ts`, `test_*.py`…), plus
+  test-only support files (helpers, fixtures, test data).
 
 Stop and tell the user if any of these fails:
 
 - the working tree is clean and you are on the default branch, up to date;
-- the project's `AGENTS.md` (or README) states the test command, and the full
-  suite is green right now.
+- the test command and the test files convention are unambiguous;
+- the full suite is green right now.
 
 ## 2. Branch
 
@@ -33,9 +41,9 @@ pointed to. Split the feature into **behaviors**: each one observable, each
 one specified by exactly one test, ordered so that each builds on what is
 already green (leaves before the code that uses them).
 
-Write them as a checklist in `.tdd/<slug>.md` (`- [ ] <behavior>`), and add
-`.tdd/` to `.git/info/exclude` if it is not there yet: the checklist is
-working state, never committed.
+Write them as a checklist in `.tdd/<slug>.md` (`- [ ] <behavior>`), headed by
+the conventions from step 1, and add `.tdd/` to `.git/info/exclude` if it is
+not there yet: the checklist is working state, never committed.
 
 Show the list to the user and **wait for their approval**. Adjust it until
 they approve. This is the only interruption before the feature is complete.
@@ -43,17 +51,19 @@ they approve. This is the only interruption before the feature is complete.
 ## 4. One cycle per behavior
 
 Work through the unchecked behaviors in order, without stopping to report
-between cycles. For each one:
+between cycles. Every delegation message includes the conventions from
+step 1. For each behavior:
 
 1. **Red.** Delegate to `red` with the behavior sentence and the context it
    needs (relevant paths, reference behavior). Then check:
-   - `git status --porcelain`: only paths inside the test directory changed;
-   - run the test command yourself: exactly the new test fails, for the
-     reason the report states.
-2. **Green.** Delegate to `green`. Then check: no path inside the test
-   directory changed, and the full suite and the linter are clean.
-3. **Refactor.** Delegate to `refactor`. Then check: no path inside the test
-   directory changed, and the full suite and the linter are clean.
+   - `git status --porcelain`: only test files changed;
+   - run the test command yourself: the new test is the only failure, for
+     the reason the report states (in a compiled language, a compile error
+     of its package on the missing symbol alone).
+2. **Green.** Delegate to `green`. Then check: no test file changed, and the
+   full suite and the linter (if any) are clean.
+3. **Refactor.** Delegate to `refactor`. Then check: no test file changed,
+   and the full suite and the linter (if any) are clean.
 4. **Commit** the cycle — one commit per behavior, message = the behavior —
    and tick it in the checklist.
 
@@ -82,7 +92,8 @@ Hand back to the user only when:
 
 ## 6. Review and approval
 
-With the full suite and the linter clean, write a review for the user:
+With the full suite and the linter (if any) clean, write a review for the
+user:
 
 - the checklist, all ticked;
 - `git log --oneline <default-branch>..HEAD`;

@@ -17,16 +17,23 @@ justify the step.
 
 ## Project conventions
 
-The test directory, the test command and the lint / format commands come
-from the project's `AGENTS.md` (or its README / `pyproject.toml` if
-`AGENTS.md` is silent). The test directory is `tests/` unless the project
-says otherwise. If you cannot determine the test command unambiguously, stop
-with `STATUS: REFUSED`.
+The orchestrator's task message gives you the project's test command, its
+lint and format commands (if any) and its **test files** convention. If it
+does not, find them in the project's `AGENTS.md`, or failing that its README
+and build files.
+
+**Test files** are the files the project's test runner treats as tests — a
+test directory, or files next to the code that match a naming pattern
+(`*_test.go`, `*.test.ts`, `test_*.py`…) — plus test-only support files
+(helpers, fixtures, test data).
+
+If you cannot determine the test command or the test files convention
+unambiguously, stop with `STATUS: REFUSED`.
 
 ## Allowed write zone
 
-**Everywhere except the test directory, existing files only.** Do not create
-files: if a new file seems warranted, propose it in your report.
+**Everything except test files, existing files only.** Do not create files:
+if a new file seems warranted, propose it in your report.
 
 ## Procedure
 
@@ -41,7 +48,7 @@ files: if a new file seems warranted, propose it in your report.
    make the next one. If a change turns the suite red, undo that change by
    editing it back — never with `git checkout`, `git restore`, `git stash` or
    `git reset`, which would also destroy the green step's uncommitted work.
-5. Finish with the linter and formatter, if the project defines them.
+5. Finish with the linter and formatter, if the project has them.
 
 ## Exit criterion
 
