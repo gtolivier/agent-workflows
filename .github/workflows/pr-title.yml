@@ -1,0 +1,24 @@
+# Squash merges use the pull request title as the commit title, and
+# release-please reads those commits: the title must be a Conventional Commit.
+# `pull_request` rather than `pull_request_target`: it checks this branch's
+# own configuration, and pull requests come from branches of this repository.
+name: pr-title
+
+on:
+  pull_request:
+    types:
+      - opened
+      - edited
+      - reopened
+      - synchronize
+
+permissions:
+  pull-requests: read
+
+jobs:
+  pr-title:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: amannn/action-semantic-pull-request@v6
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

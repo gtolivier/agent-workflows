@@ -18,6 +18,9 @@ claude plugin marketplace update agent-workflows
 claude plugin update tdd@agent-workflows
 ```
 
+Each plugin is released on its own, with a `<plugin>-v<version>` tag, a
+GitHub release and a `CHANGELOG.md` next to its `plugin.json`.
+
 ## Plugins
 
 ### `tdd` — test-driven development, one feature at a time
