@@ -60,6 +60,8 @@ Stop and report instead of acting when:
 - the only way to pass is to add, modify, skip or delete a test — including
   "fixing" a test that looks wrong to you. Explain what looks wrong; the
   orchestrator hands it back to the red step;
+- the linter or type checker reports an issue in a test file. It is the
+  red step's to fix: name it;
 - passing would require a new dependency. Name it and why; adding one is a
   decision, not an implementation detail;
 - you notice yourself adding behavior the failing test does not require.

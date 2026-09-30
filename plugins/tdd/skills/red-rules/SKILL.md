@@ -12,9 +12,10 @@ and nothing downstream will notice. Take the time to get it right.
 
 ## Project conventions
 
-The orchestrator's task message gives you the project's test command and its
-**test files** convention. If it does not, find them in the project's
-`AGENTS.md`, or failing that its README and build files.
+The orchestrator's task message gives you the project's test command, its
+lint and type-check commands (if any) and its **test files** convention. If
+it does not, find them in the project's `AGENTS.md`, or failing that its
+README and build files.
 
 **Test files** are the files the project's test runner treats as tests — a
 test directory, or files next to the code that match a naming pattern
@@ -39,7 +40,8 @@ file, not a build or config file.
 3. Write **exactly one** new test case for the behavior you were given.
    Shared test helpers or fixtures may be added if the test needs them. Do
    not modify the assertions of existing tests.
-4. Run the full suite again.
+4. Run the full suite again, then the linter and type checker, if the
+   project has them.
 
 ## Exit criterion
 
@@ -49,7 +51,10 @@ file, not a build or config file.
   symbol (import error, undefined name) or a signature that does not accept
   the call yet (an unexpected argument, a wrong number of arguments: a
   `TypeError` in Python, a compile error in a compiled language), **and**
-- every other test still passes.
+- every other test still passes, **and**
+- the linter and type checker (if any) report nothing in the test files
+  but the same missing-API error: the green step cannot edit tests, so it
+  could not fix anything else.
 
 **When the missing API keeps the test file from loading** — a Python import
 at the top of the file makes the runner report a collection error, a
@@ -80,8 +85,8 @@ Stop and report instead of acting when:
 
 ## Rules
 
-- The shell is for running tests and read-only inspection. Never use it to
-  create or modify files.
+- The shell is for running tests, the linter, the type checker, and
+  read-only inspection. Never use it to create or modify files.
 - Never commit, stage, stash, reset, restore, clean or check out anything in
   Git. The orchestrator owns the history and checks your diff against your
   write zone.
@@ -94,7 +99,7 @@ End with this block, and nothing after it:
 STATUS: RED | ALREADY_GREEN | REFUSED
 BEHAVIOR: <one sentence: the behavior the new test specifies>
 FILES: <paths you created or modified, or "none">
-COMMAND: <the exact test command you ran last>
+COMMAND: <the exact test, lint and type-check commands you ran last>
 OUTPUT (verbatim, last lines, failure included):
 <paste, do not summarize>
 NOTES: <one or two sentences, or "none">

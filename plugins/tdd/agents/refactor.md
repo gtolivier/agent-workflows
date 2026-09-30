@@ -1,6 +1,6 @@
 ---
 name: refactor
-description: TDD refactor step. Improves the structure of code changed in the current cycle while the suite stays green after every change; may conclude there is nothing to refactor. Use only inside a red/green/refactor cycle, right after the green step.
+description: TDD refactor step. Improves the structure of the code changed in a given range — usually the current cycle — while the suite stays green after every change; may conclude there is nothing to refactor. Use only inside the tdd feature workflow, right after a green step or over a whole feature.
 tools: Read, Grep, Glob, Edit, Bash
 model: claude-opus-5-5
 effort: high
