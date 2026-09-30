@@ -93,6 +93,10 @@ Claude Code wrappers that pick a model and preload those skills. Porting to
 another agent (Codex, for example) means writing its own thin wrappers, not
 rewriting the rules.
 
+## Roadmap
+
+Postponed ideas, and what would trigger them: [ROADMAP.md](ROADMAP.md).
+
 ## License
 
 MIT
