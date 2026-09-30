@@ -61,8 +61,10 @@ behaviors.
 **Foreground subagents.** The cycle runs smoothest when each subagent runs
 in the foreground and returns its report within the turn. Claude Code's fork
 mode, on by default in interactive sessions, runs every subagent in the
-background; set `CLAUDE_CODE_FORK_SUBAGENT=0` (for instance in the project's
-`.claude/settings.local.json`, under `env`) to turn it off. Without it, the
+background; set `CLAUDE_CODE_FORK_SUBAGENT=0` in the shell environment
+Claude Code is launched from (for instance in `~/.zshrc`) to turn it off. The
+`env` section of Claude Code's settings files does not work here: it only
+reaches the commands Claude runs, not Claude Code itself. Without it, the
 loop still works: the skill marks each wait in its checklist.
 
 **Ralph loop.** A Stop hook keeps a running feature going. The skill keeps a
@@ -70,8 +72,9 @@ loop still works: the skill marks each wait in its checklist.
 blocks the session from stopping and relaunches it, until three relaunches
 pass without progress (a newly ticked behavior or a new commit). It finds
 the feature whether the session runs in its repository or in the folder
-above it. It lets the session stop whenever the
-skill waits for you or for CI and reviews. The hook only reads the checklist
+above it — in that second case, with one running feature at a time (see the
+[roadmap](ROADMAP.md) for parallel features). It lets the session stop
+whenever the skill waits for you or for CI and reviews. The hook only reads the checklist
 — it never runs a command — and does nothing outside a running
 `/tdd:feature`.
 

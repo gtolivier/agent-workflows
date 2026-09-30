@@ -27,32 +27,50 @@ worktree:
 **What blocks**
 
 1. **The default branch.** Step 1 of `/tdd:feature` requires being on the
-   default branch, and step 8 switches back to it. In a worktree, the
-   default branch is usually checked out in the main checkout already, and
-   Git refuses to check it out twice. The feature branch should be created
-   from `origin/<default-branch>` without switching to it, and step 8 should
-   remove the worktree instead of switching back.
+   default branch, step 2 creates the feature branch from it, step 6
+   compares against it before pushing, and step 8 switches back to it. In a
+   worktree, the default branch is usually checked out in the main checkout
+   already — Git refuses to check it out twice — and the local copy may be
+   stale. Steps 1, 2 and 6 should work from `origin/<default-branch>` after
+   a fetch; step 8 must not remove the worktree it runs in, and should leave
+   the cleanup to the end of the session (Claude Code offers it when a
+   worktree session exits).
 2. **Sessions started in a parent folder.** When a session starts in a
    folder that holds several repositories, the Stop hook takes the first
-   running feature it finds. With two features running in parallel, one
-   session could be relaunched for the other's feature. Simplest rule: one
-   session per worktree, started inside it. A sturdier option: make the hook
-   session-aware — it receives a `session_id` in its input.
-3. **Project settings.** Settings that apply to one project, such as a
-   restricted GitHub token in `.claude/settings.local.json`, may not be read
-   by a session started in a worktree. Which settings file Claude Code reads
-   in a worktree must be checked before any real use, or the session may run
+   running feature it finds. This already goes wrong today, without
+   worktrees, as soon as two sessions started in the same parent folder
+   each run a feature: one session can be relaunched for the other's
+   feature. Rule until then: one running feature per parent folder, or one
+   session per repository or worktree, started inside it. Making the hook
+   session-aware (it receives a `session_id`) would need the checklist to
+   record its owning session, which breaks resuming a feature from a new
+   session; the "one session per worktree" rule is simpler.
+3. **Project settings.** A new worktree is a fresh checkout: git-ignored
+   files such as `.claude/settings.local.json` (for example one holding a
+   restricted GitHub token) are not in it. Claude Code can copy them with a
+   `.worktreeinclude` file, and it saves permission approvals made in a
+   worktree to the main checkout's `.claude/settings.local.json`, which
+   suggests worktree sessions read that file; whether its `env` section
+   applies too must be checked before any real use, or the session may run
    with broader credentials than intended.
-4. **Details.** Each new worktree needs its dependencies installed (for
+4. **Claude Code's own worktrees.** `claude --worktree <name>` creates the
+   worktree under `.claude/worktrees/<name>/` on a `worktree-<name>` branch,
+   and `EnterWorktree` moves a running session into one. The Stop hook only
+   looks at `feature/*` branches, and in parent-folder mode it does not look
+   inside `.claude/worktrees/`. Either the skill creates its `feature/<slug>`
+   branch inside such a worktree, or the hook learns to recognize them.
+5. **Details.** Each new worktree needs its dependencies installed (for
    example `uv sync`). Review bots with a rate limit review one pull request
    at a time; the skill already never waits on them.
 
 **Plan**
 
-- Adapt steps 1, 2 and 8 of `/tdd:feature` to worktrees, and document "one
-  session per worktree, started inside it".
-- Check how project settings apply in a worktree, and fix the setup if
-  needed.
+- Adapt steps 1, 2, 6 and 8 of `/tdd:feature` to worktrees, and document
+  "one session per worktree, started inside it".
+- Decide between Claude Code's `--worktree` and plain `git worktree`, and
+  make the Stop hook and the branch naming agree.
+- Check which project settings a worktree session reads, and use
+  `.worktreeinclude` or a repository-root settings file if needed.
 - Verify it end to end with two throwaway features running in parallel,
   including the Stop hook and the write-zone checks.
 
