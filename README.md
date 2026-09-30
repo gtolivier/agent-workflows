@@ -58,15 +58,15 @@ hard-coded value; the next example forces the generalization. When a green
 step still needs a lot of code, the skill proposes to split the remaining
 behaviors.
 
-**Foreground subagents.** The cycle runs smoothest when each subagent runs
-in the foreground and returns its report within the turn. Claude Code's fork
-mode, on by default in interactive sessions, runs every subagent in the
-background; set `CLAUDE_CODE_FORK_SUBAGENT=0` in the shell environment
-Claude Code is launched from (for instance in `~/.zshrc`) to turn it off. In
-our tests, setting it in the `env` section of a settings file did not change
-the mode: that section reached the commands Claude ran, not the Claude Code
-process itself. Without it, the loop still works: the skill marks each wait
-in its checklist.
+**Background subagents.** In interactive Claude Code sessions, subagents
+usually run in the background: the orchestrator ends its turn and resumes
+when the subagent reports. The skill handles it by marking each wait in its
+checklist (`Status: waiting — …`), so the Stop hook lets the session wait
+instead of relaunching it. In our tests, `CLAUDE_CODE_FORK_SUBAGENT=0` —
+whether in a settings file or in the shell Claude Code starts from — did not
+make subagents run in the foreground. Claude Code's documentation names
+`CLAUDE_CODE_DISABLE_BACKGROUND_TASKS=1` as forcing it, at the cost of every
+other background task; we chose to keep the default.
 
 **Ralph loop.** A Stop hook keeps a running feature going. The skill keeps a
 `Status:` line at the top of its checklist; while it says `running`, the hook
