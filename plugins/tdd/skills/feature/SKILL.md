@@ -188,7 +188,11 @@ and commit its result as in step 4, item 3. Then:
 1. **Check before publishing.** Pushing publishes the branch, on a public
    repository to everyone. Read `git diff <default-branch>...HEAD` for
    secrets, credentials, personal data or internal URLs; if you find any,
-   stop and tell the user — do not push.
+   stop and tell the user — do not push. The same holds for everything you
+   publish afterwards — PR description, review comments, replies: nothing
+   about the local machine (paths, local tool or interpreter versions, the
+   content or location of the user's private configuration and instruction
+   files).
 2. **Open the pull request.** Push the branch and open a PR titled after the
    feature. Its description holds the checklist, all ticked, and anything
    notable: `ALREADY_GREEN` tests, refusals, restored violations.
@@ -196,8 +200,14 @@ and commit its result as in step 4, item 3. Then:
    - CI runs on the PR. If it fails, stop and report — do not try to fix
      it: a failure the local suite did not show needs the user's eyes.
    - Review bots installed on the repository review on their own.
-   - Run an independent review of the PR as well, when one is available (in
-     Claude Code: `/code-review <PR number> --comment`).
+   - Run an independent review of the PR as well, when one is available,
+     **without letting it post** (in Claude Code: `/code-review <PR
+     number>`, not `--comment`). It runs on the user's machine and may
+     cite what it saw there. Screen its findings as in item 1 — rephrase
+     or drop any local detail — then post each one yourself as an inline
+     comment on the PR (with `gh`: `gh api
+     repos/<owner>/<repo>/pulls/<number>/comments` with `body`,
+     `commit_id`, `path`, `line`), starting with "**Claude (review)**".
    - To end your turn while they run, set `Status: waiting — CI and
      reviews` first; set `Status: running` again when you resume.
 4. **Triage the review comments** before involving the user. Only comments
