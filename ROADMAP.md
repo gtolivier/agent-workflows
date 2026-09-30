@@ -82,8 +82,9 @@ machine.
 
 Tools such as [Herdr](https://herdr.dev) (open source, Apache 2.0) run
 several coding-agent sessions — Claude Code, Codex and others — in panes,
-show which one is working, blocked or idle, restore them after a restart,
-and can gather machines over SSH.
+show which one is working, blocked or idle, restore the layout after a
+restart (resuming an agent's conversation only where its integration
+supports it), and can gather machines over SSH.
 
 **Why not now**
 

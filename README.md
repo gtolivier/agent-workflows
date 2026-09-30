@@ -62,10 +62,11 @@ behaviors.
 in the foreground and returns its report within the turn. Claude Code's fork
 mode, on by default in interactive sessions, runs every subagent in the
 background; set `CLAUDE_CODE_FORK_SUBAGENT=0` in the shell environment
-Claude Code is launched from (for instance in `~/.zshrc`) to turn it off. The
-`env` section of Claude Code's settings files does not work here: it only
-reaches the commands Claude runs, not Claude Code itself. Without it, the
-loop still works: the skill marks each wait in its checklist.
+Claude Code is launched from (for instance in `~/.zshrc`) to turn it off. In
+our tests, setting it in the `env` section of a settings file did not change
+the mode: that section reached the commands Claude ran, not the Claude Code
+process itself. Without it, the loop still works: the skill marks each wait
+in its checklist.
 
 **Ralph loop.** A Stop hook keeps a running feature going. The skill keeps a
 `Status:` line at the top of its checklist; while it says `running`, the hook
