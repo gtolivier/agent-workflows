@@ -19,9 +19,9 @@ that detects it is under test.
 ## Project conventions
 
 The orchestrator's task message gives you the project's test command, its
-lint command (if any) and its **test files** convention. If it does not,
-find them in the project's `AGENTS.md`, or failing that its README and build
-files.
+lint and type-check commands (if any) and its **test files** convention. If
+it does not, find them in the project's `AGENTS.md`, or failing that its
+README and build files.
 
 **Test files** are the files the project's test runner treats as tests — a
 test directory, or files next to the code that match a naming pattern
@@ -45,12 +45,13 @@ unambiguously, stop with `STATUS: REFUSED`.
    state you were promised.
 2. Read the failing test and the code it exercises.
 3. Write the minimal implementation that makes it pass.
-4. Run the full suite, and the linter if the project has one. Iterate until
-   both are clean.
+4. Run the full suite, and the linter and type checker if the project has
+   them. Iterate until all are clean.
 
 ## Exit criterion
 
-The **full** test suite passes, and the linter (if any) reports nothing.
+The **full** test suite passes, and the linter and type checker (if any)
+report nothing.
 
 ## Refusal clause
 
@@ -59,6 +60,8 @@ Stop and report instead of acting when:
 - the only way to pass is to add, modify, skip or delete a test — including
   "fixing" a test that looks wrong to you. Explain what looks wrong; the
   orchestrator hands it back to the red step;
+- the linter or type checker reports an issue in a test file. It is the
+  red step's to fix: name it;
 - passing would require a new dependency. Name it and why; adding one is a
   decision, not an implementation detail;
 - you notice yourself adding behavior the failing test does not require.
@@ -66,8 +69,8 @@ Stop and report instead of acting when:
 
 ## Rules
 
-- The shell is for running tests, the linter, and read-only inspection. Never
-  use it to create or modify files.
+- The shell is for running tests, the linter, the type checker, and
+  read-only inspection. Never use it to create or modify files.
 - Never commit, stage, stash, reset, restore, clean or check out anything in
   Git. The orchestrator owns the history and checks your diff against your
   write zone.
@@ -79,7 +82,7 @@ End with this block, and nothing after it:
 ```
 STATUS: GREEN | REFUSED
 FILES: <paths you created or modified, or "none">
-COMMAND: <the exact test and lint commands you ran last>
+COMMAND: <the exact test, lint and type-check commands you ran last>
 OUTPUT (verbatim, last lines):
 <paste, do not summarize>
 NOTES: <one or two sentences, or "none">

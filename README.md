@@ -58,15 +58,23 @@ hard-coded value; the next example forces the generalization. When a green
 step still needs a lot of code, the skill proposes to split the remaining
 behaviors.
 
-**Background subagents.** In interactive Claude Code sessions, subagents
-usually run in the background: the orchestrator ends its turn and resumes
-when the subagent reports. The skill handles it by marking each wait in its
-checklist (`Status: waiting — …`), so the Stop hook lets the session wait
-instead of relaunching it. In our tests, `CLAUDE_CODE_FORK_SUBAGENT=0` —
-whether in a settings file or in the shell Claude Code starts from — did not
-make subagents run in the foreground. Claude Code's documentation names
-`CLAUDE_CODE_DISABLE_BACKGROUND_TASKS=1` as forcing it, at the cost of every
-other background task; we chose to keep the default.
+**Clean code.** The refactor step checks each cycle's code against explicit
+criteria: no magic numbers or strings, intention-revealing names, small
+single-purpose functions, no flag arguments, no duplicated knowledge,
+comments that say why, type annotations where the project uses them. Once
+every behavior is done, one last refactor looks at the whole feature, to
+catch what no single cycle showed. The plugin needs no configuration for
+this, but rules a linter or type checker can enforce are better enforced
+there, in the project's own tool settings: every step must leave both
+clean.
+
+**Foreground subagents.** The orchestrator runs each subagent in the
+foreground (`run_in_background: false` on Claude Code's Agent tool) and
+reads its report within the same turn. Should one run in the background
+anyway, the skill marks the wait in its checklist (`Status: waiting — …`),
+so the Stop hook lets the session wait instead of relaunching it. No
+environment variable is needed: `CLAUDE_CODE_FORK_SUBAGENT=0` made no
+difference in our tests.
 
 **Ralph loop.** A Stop hook keeps a running feature going. The skill keeps a
 `Status:` line at the top of its checklist; while it says `running`, the hook
@@ -75,19 +83,19 @@ pass without progress (a newly ticked behavior or a new commit). It finds
 the feature whether the session runs in its repository or in the folder
 above it — in that second case, with one running feature at a time (see the
 [roadmap](ROADMAP.md) for parallel features). It lets the session stop
-whenever the skill waits for you or for CI and reviews. The hook only reads the checklist
-— it never runs a command — and does nothing outside a running
-`/tdd:feature`.
+whenever the skill waits for you or for CI and reviews. The hook only reads
+the checklist — it never runs a command — and does nothing outside a
+running `/tdd:feature`.
 
 The plugin is language-agnostic and needs no per-project configuration. It
 reads the project's conventions from its `AGENTS.md` (or, failing that, its
-README and build files): the test command, the lint and format commands if
-any, and where test files live — a test directory, or a naming pattern next
-to the code such as `*_test.go` or `*.test.ts`. Stating them in `AGENTS.md`
-makes them unambiguous. A test file that fails to load — an import error, a
-compile error — because the symbol it tests does not exist yet counts as a
-valid red, and so does a call the function's current signature does not
-accept yet.
+README and build files): the test command, the lint, type-check and format
+commands if any, and where test files live — a test directory, or a naming
+pattern next to the code such as `*_test.go` or `*.test.ts`. Stating them in
+`AGENTS.md` makes them unambiguous. A test file that fails to load — an
+import error, a compile error — because the symbol it tests does not exist
+yet counts as a valid red, and so does a call the function's current
+signature does not accept yet.
 
 ## Portability
 
