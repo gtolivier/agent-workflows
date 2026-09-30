@@ -1,0 +1,20 @@
+# Keeps a release pull request open for each plugin with unreleased changes:
+# it bumps the plugin's version and CHANGELOG from the Conventional Commits
+# merged since the last release. Merging it tags and publishes the release.
+name: release-please
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+
+jobs:
+  release-please:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: googleapis/release-please-action@v5.0.0

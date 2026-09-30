@@ -1,0 +1,18 @@
+{
+  "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
+  "bootstrap-sha": "ef4e87d7f02bb75b7dcbd19750165503a0e67df9",
+  "bump-minor-pre-major": true,
+  "packages": {
+    "plugins/tdd": {
+      "release-type": "simple",
+      "component": "tdd",
+      "extra-files": [
+        {
+          "type": "json",
+          "path": ".claude-plugin/plugin.json",
+          "jsonpath": "$.version"
+        }
+      ]
+    }
+  }
+}
