@@ -31,6 +31,8 @@ claude --plugin-dir plugins/<name>        # try a plugin without installing it
   merge makes the title the commit. CI checks the type, and that a scope,
   if any, names a plugin. Scope every change to a plugin with its name
   (`feat(tdd): …`); repository-level changes take no scope (`ci: …`).
+  release-please's own release PRs (opened by `github-actions[bot]` from a
+  `release-please--…` branch) are exempt: their titles are generated.
 - Never edit a plugin's `version` or `CHANGELOG.md` by hand. release-please
   keeps a release pull request open that bumps them from the commits merged
   under `plugins/<name>/` since the last release: `fix` → patch, `feat` →
