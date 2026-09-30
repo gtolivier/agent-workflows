@@ -11,18 +11,19 @@ subagent (`red`, `green`, `refactor` — in Claude Code, `tdd:red`, `tdd:green`,
 `tdd:refactor`), check what it did, and keep the history.
 
 When delegating, **never override the subagent's model**: each definition
-picks the model suited to its step. Run each subagent **in the foreground**
-when the environment allows it, and wait for its report within your turn (in
-Claude Code this needs fork mode off: `CLAUDE_CODE_FORK_SUBAGENT=0`). When a
-subagent runs in the background instead, set `Status: waiting — <which step>`
-before ending your turn (see step 3).
+picks the model suited to its step. A subagent may report within your turn,
+or run in the background and report later — in interactive Claude Code
+sessions, it usually runs in the background. When it does, set
+`Status: waiting — <which step>` before ending your turn (see step 3), and
+resume when it reports.
 
 ## 1. Preconditions and conventions
 
 Establish the project's conventions from its `AGENTS.md`, or failing that its
 README and build files:
 
-- the **test command**, and the **lint / format commands** if any;
+- the **test command**, and the **lint / type-check / format commands** if
+  any;
 - the **test files** convention: a test directory, or a naming pattern for
   test files next to the code (`*_test.go`, `*.test.ts`, `test_*.py`…), plus
   test-only support files (helpers, fixtures, test data).
@@ -63,6 +64,7 @@ the output of `git rev-parse --git-dir`, in exactly this shape:
 Status: waiting-for-user — behavior list to approve
 Test command: <command>
 Lint command: <command, or "none">
+Type-check command: <command, or "none">
 Test files: <convention>
 
 - [ ] <first behavior>
@@ -124,7 +126,8 @@ it (no `--no-verify`): for this feature, commit red and green together as
 
    Commit `red: <behavior>`.
 2. **Green.** Delegate to `green`. Then check: no test file changed, and the
-   full suite and the linter (if any) are clean. Commit `green: <behavior>`.
+   full suite, the linter and the type checker (if any) are clean. Commit
+   `green: <behavior>`.
 
    **Size signal.** If green needed more than a handful of lines of
    production code, or several files, the behavior was too big and the
@@ -132,9 +135,9 @@ it (no `--no-verify`): for this feature, commit red and green together as
    and propose a split of the remaining behaviors to the user rather than
    changing the list silently.
 3. **Refactor.** Delegate to `refactor`. Then check: no test file changed,
-   and the full suite and the linter (if any) are clean. If it changed
-   anything, commit `refactor: <what changed>`; "nothing to refactor"
-   makes no commit.
+   and the full suite, the linter and the type checker (if any) are clean.
+   If it changed anything, commit `refactor: <what changed>`; "nothing to
+   refactor" makes no commit.
 4. **Tick** the behavior in the checklist (`- [x]`).
 
 **When a check fails**, discard the subagent's changes to out-of-zone paths
@@ -167,10 +170,15 @@ These conditions keep applying during the triage of step 6.
 
 ## 6. Pull request and reviews
 
-With the full suite and the linter (if any) clean, first **look for leftover
-fakes**: read the feature's production code for hard-coded values that only
-satisfy one tested example. Each one means a missing triangulating behavior:
-stop (step 5) and propose it to the user. Then:
+With the full suite, the linter and the type checker (if any) clean, first
+**look for leftover fakes**: read the feature's production code for
+hard-coded values that only satisfy one tested example. Each one means a
+missing triangulating behavior: stop (step 5) and propose it to the user.
+
+Then run **one refactor over the whole feature**: delegate to `refactor`
+with the range `<default-branch>...HEAD`, so that it sees what no single
+cycle showed — duplication across cycles, names that no longer fit. Check
+and commit it as in step 4. Then:
 
 1. **Check before publishing.** Pushing publishes the branch, on a public
    repository to everyone. Read `git diff <default-branch>...HEAD` for

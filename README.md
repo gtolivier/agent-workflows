@@ -58,6 +58,15 @@ hard-coded value; the next example forces the generalization. When a green
 step still needs a lot of code, the skill proposes to split the remaining
 behaviors.
 
+**Clean code.** The refactor step checks each cycle's code against explicit
+criteria: no magic numbers or strings, intention-revealing names, small
+single-purpose functions, no flag arguments, no duplicated knowledge,
+comments that say why, type annotations where the project uses them. Once
+every behavior is done, one last refactor looks at the whole feature, to
+catch what no single cycle showed. Where a linter or a type checker can
+enforce a rule, configure it in the project: the green and refactor steps
+must leave both clean.
+
 **Background subagents.** In interactive Claude Code sessions, subagents
 usually run in the background: the orchestrator ends its turn and resumes
 when the subagent reports. The skill handles it by marking each wait in its
@@ -81,10 +90,10 @@ whenever the skill waits for you or for CI and reviews. The hook only reads the 
 
 The plugin is language-agnostic and needs no per-project configuration. It
 reads the project's conventions from its `AGENTS.md` (or, failing that, its
-README and build files): the test command, the lint and format commands if
-any, and where test files live — a test directory, or a naming pattern next
-to the code such as `*_test.go` or `*.test.ts`. Stating them in `AGENTS.md`
-makes them unambiguous. A test file that fails to load — an import error, a
+README and build files): the test command, the lint, type-check and format
+commands if any, and where test files live — a test directory, or a naming
+pattern next to the code such as `*_test.go` or `*.test.ts`. Stating them in
+`AGENTS.md` makes them unambiguous. A test file that fails to load — an import error, a
 compile error — because the symbol it tests does not exist yet counts as a
 valid red, and so does a call the function's current signature does not
 accept yet.
