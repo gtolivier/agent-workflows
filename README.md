@@ -46,7 +46,8 @@ Run a feature with:
 The skill creates a `feature/<slug>` branch, proposes a list of behaviors
 (one test each) and waits for your approval, then runs one cycle per
 behavior without interrupting you, with one commit per step (`red: …`,
-`green: …`, `refactor: …`) so that each step can be checked on its own.
+`green: …`, `refactor: …`, and `refactor(tests): …` for the final tests
+pass) so that each step can be checked on its own.
 Once the feature is
 complete, it opens a pull request, lets CI and review bots run alongside an
 independent review, triages their comments and yours (fix, propose, or
@@ -68,8 +69,9 @@ comments that say why, type annotations where the project uses them. Once
 every behavior is done, one last refactor looks at the whole feature, to
 catch what no single cycle showed, in two passes: the production code
 first, then the tests alone. The tests pass leaves the production code
-untouched and keeps the same number of tests, every assertion and every
-expected value; the orchestrator checks its zone and the test count. The
+untouched and keeps the same tests, every assertion, every expected value
+and every input; the orchestrator checks its zone, the test counts and the
+diff. The
 plugin needs no configuration for this, but rules a linter or type checker
 can enforce are better enforced there, in the project's own tool settings:
 every step must leave both clean.

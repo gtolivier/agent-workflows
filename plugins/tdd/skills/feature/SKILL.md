@@ -188,15 +188,19 @@ the tests pass checks a settled production code:
 - **Code pass.** "Improve this feature's changes", in `code` mode. Check
   and commit its result as in step 4, item 3.
 - **Tests pass.** "Improve this feature's tests", in `tests` mode: it
-  changes only test files, and neither the number of tests nor any
-  assertion or expected value. Note the number of tests the full suite
-  reports before delegating. Then check: only test files changed, and the
-  full suite, the linter and the type checker (if any) are clean, with the
-  same number of tests as before. If it changed anything, commit
-  `refactor(tests): <what changed>`, and check the commit against its
-  zone (`git show --stat`). A different number of tests is a failed check:
-  discard all its changes and rerun it once with a reminder of its
-  guardrails, as for a write-zone violation (step 4).
+  changes only test files, and neither the tests the suite runs nor any
+  assertion, expected value or input. Note the counts the full suite
+  reports (passed, skipped…) before delegating. Then check:
+  - `git status --porcelain`: only test files changed;
+  - the full suite, the linter and the type checker (if any) are clean,
+    with the same counts as before;
+  - `git diff`: no assertion, expected value or test input changed —
+    moved into a fixture or a helper is fine, rewritten is not.
+
+  If it changed anything, commit `refactor(tests): <what changed>`. A
+  failed check discards all its changes (the code pass is committed), and
+  the pass is rerun once with a reminder of its guardrails, as for a
+  write-zone violation (step 4).
 
 Then:
 
