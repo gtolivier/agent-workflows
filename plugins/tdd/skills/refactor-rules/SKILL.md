@@ -1,6 +1,6 @@
 ---
 name: refactor-rules
-description: Rules of the refactor step of a TDD cycle — improve the structure of the code changed in a given range (usually this cycle) while the suite stays green after every change; "nothing to refactor" is a valid outcome. Loaded by the refactor subagent; not meant to be invoked directly.
+description: Rules of the refactor step of a TDD cycle — improve the structure of the code changed in a given range (usually this cycle) while the suite stays green after every change — the production code in code mode, only the tests in tests mode; "nothing to refactor" is a valid outcome. Loaded by the refactor subagent; not meant to be invoked directly.
 ---
 
 # Refactor step
@@ -15,6 +15,19 @@ anything better. That judgment is yours.
 **"Nothing to refactor" is a valid and common outcome.** This step runs on
 every cycle; a quick empty pass is not a skipped one. Do not invent work to
 justify the step.
+
+## Modes
+
+The orchestrator's task message names the mode; without one, it is `code`.
+
+- **`code`** — improve the production code. The tests are the safety net:
+  they stay as they are.
+- **`tests`** — improve the test code. The production code is the safety
+  net: it stays as it is, and so does everything the tests check.
+
+Each mode changes one half and lets the other check it. A change that
+rewrote a test and the code it tests together could alter behavior and
+still be green.
 
 ## Project conventions
 
@@ -33,20 +46,25 @@ unambiguously, stop with `STATUS: REFUSED`.
 
 ## Allowed write zone
 
-**Everything except test files, existing files only.** Do not create files:
-if a new file seems warranted, propose it in your report.
+**Existing files only**, in both modes. Do not create files: if a new file
+seems warranted, propose it in your report.
+
+- **`code` mode: everything except test files.**
+- **`tests` mode: test files only.** Every other file is frozen.
 
 ## Procedure
 
-1. Run the full test suite before touching anything. If a single test fails,
-   stop with `STATUS: REFUSED` without modifying anything.
+1. Run the full test suite before touching anything, and note the counts
+   it reports (passed, skipped, and any other category). If a single test fails, stop with `STATUS: REFUSED`
+   without modifying anything.
 2. Look at the changes the orchestrator names — a commit range such as
    `<red commit>^..<green commit>` or `<default-branch>..HEAD`
    (`git log -p <range>`), or a review finding — plus any uncommitted
-   change (`git diff HEAD`). Read their surroundings for context.
-3. Check them against every **clean code criterion** below. If none is
-   clearly violated, stop with `STATUS: NOTHING_TO_REFACTOR` and one
-   sentence saying why.
+   change (`git diff HEAD`); in `tests` mode, only the test files among
+   them. Read their surroundings for context.
+3. Check them against every **clean code criterion** below — in `tests`
+   mode, the **test criteria** too. If none is clearly violated, stop with
+   `STATUS: NOTHING_TO_REFACTOR` and one sentence saying why.
 4. Otherwise, make **one** small change, run the full suite, and only then
    make the next one. If a change turns the suite red, undo that change by
    editing it back — never with `git checkout`, `git restore`, `git clean`,
@@ -96,19 +114,58 @@ result whatever its input — the green step's "fake it" — is generalized by
 a later red step's triangulation, not here: leave it. Generalizing it now
 would add behavior that no test asks for.
 
+## Test criteria (`tests` mode)
+
+In `tests` mode, the clean code criteria apply to the test code, with these
+additions. Where a criterion conflicts with the guardrails below — a
+repeated expected value, an assertion block written twice — the guardrails
+win: leave it.
+
+- **Names say the behavior.** A test's name says what behavior it checks,
+  not which function it calls or in which order it was written.
+- **Shared setup has one home.** Arrangement repeated across tests moves to
+  a fixture or a helper in an existing test file — as long as each test
+  still reads on its own and gets the same inputs as before. A reader who must chase three helpers to see what
+  a test does has lost more than the duplication cost.
+- **Expected values are not magic.** A literal in an assertion is the
+  example the test specifies: it stays where it is, as written.
+
+## Tests-mode guardrails
+
+In `tests` mode, the tests are the specification: you change how they are
+written, never what they check.
+
+- **The same tests.** The suite reports the same counts at the end as in
+  step 1 — passed, skipped and every other category: no test added,
+  removed, merged or split, and none skipped, marked as expected to fail or
+  disabled. A parameterized case counts as a test. Renaming a test is
+  allowed.
+- **No assertion, expected value or input changed.** Every assertion stays
+  as written — the same check, the same expected value, the same message —
+  and every test gets the same inputs, even when they move to a fixture or
+  a helper. Restructure around them: names, setup, helpers.
+
 ## Exit criterion
 
 The full suite has been green after **every** change, not only at the end,
-and the linter and type checker (if any) report nothing.
+and the linter and type checker (if any) report nothing. In `tests` mode,
+the guardrails hold.
 
 ## Refusal clause
 
-Stop and report instead of acting when:
+Stop with `STATUS: REFUSED` when the suite is not green when you start.
 
-- the suite is not green when you start;
-- an improvement would change the colour of any test, or require changing a
-  test — including renaming a public name the tests use;
-- an improvement would add behavior. That is the next red step's job.
+Do not make an improvement that would:
+
+- change the colour of any test;
+- in `code` mode, require changing a test — including renaming a public
+  name the tests use;
+- in `tests` mode, require changing a file other than a test file, or break
+  a guardrail;
+- add behavior. That is the next red step's job.
+
+Leave it out, and name it in `NOTES`. If nothing else is worth changing,
+report `NOTHING_TO_REFACTOR`.
 
 ## Rules
 
@@ -126,6 +183,8 @@ End with this block, and nothing after it:
 
 ```
 STATUS: REFACTORED | NOTHING_TO_REFACTOR | REFUSED
+MODE: code | tests
+TESTS: <counts at step 1> → <counts at the end>
 CHANGES: <one line per change, each followed by its test run result, or "none">
 FILES: <paths you modified, or "none">
 COMMAND: <the exact test, lint and type-check commands you ran last>

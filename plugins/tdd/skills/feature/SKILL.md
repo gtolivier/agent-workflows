@@ -111,7 +111,7 @@ content nor where it is. Beyond that, each step gets only what it needs:
 |---|---|---|
 | `red` | the behavior sentence, the relevant paths, the reference behavior if any | the other behaviors |
 | `green` | only "make the failing test pass" | the behavior sentence, the reference, the other behaviors: the test is its only specification, so that it implements the test and not a sentence |
-| `refactor` | only "improve this cycle's changes", with the cycle's commit range (`<red commit>^..<green commit>`) | the behavior sentence, the other behaviors |
+| `refactor` | only "improve this cycle's changes" in `code` mode, with the cycle's commit range (`<red commit>^..<green commit>`) | the behavior sentence, the other behaviors |
 
 For each behavior, **commit after every step** — `red: <behavior>`,
 `green: <behavior>`, `refactor: <what changed>` — so that each commit shows
@@ -138,10 +138,10 @@ it (no `--no-verify`): for this feature, commit red and green together as
    remaining ones probably are too. Finish this cycle, then stop (step 5)
    and propose a split of the remaining behaviors to the user rather than
    changing the list silently.
-3. **Refactor.** Delegate to `refactor`. Then check: no test file changed,
-   and the full suite, the linter and the type checker (if any) are clean.
-   If it changed anything, commit `refactor: <what changed>`; "nothing to
-   refactor" makes no commit.
+3. **Refactor.** Delegate to `refactor` in `code` mode. Then check: no test
+   file changed, and the full suite, the linter and the type checker (if
+   any) are clean. If it changed anything, commit `refactor: <what
+   changed>`; "nothing to refactor" makes no commit.
 4. **Tick** the behavior in the checklist (`- [x]`).
 
 **When a check fails**, discard the subagent's changes to out-of-zone paths
@@ -179,11 +179,30 @@ With the full suite, the linter and the type checker (if any) clean, first
 hard-coded values that only satisfy one tested example. Each one means a
 missing triangulating behavior: stop (step 5) and propose it to the user.
 
-Then run **one refactor over the whole feature**: delegate to `refactor`
-with "improve this feature's changes" and the range `<default-branch>..HEAD`
-(two dots: only the feature's commits), so that it sees what no single
-cycle showed — duplication across cycles, names that no longer fit. Check
-and commit its result as in step 4, item 3. Then:
+Then run **one refactor over the whole feature**, in two passes, each
+delegated to `refactor` with the range `<default-branch>..HEAD` (two dots:
+only the feature's commits), so that it sees what no single cycle showed —
+duplication across cycles, names that no longer fit. Code first, so that
+the tests pass checks a settled production code:
+
+- **Code pass.** "Improve this feature's changes", in `code` mode. Check
+  and commit its result as in step 4, item 3.
+- **Tests pass.** "Improve this feature's tests", in `tests` mode: it
+  changes only test files, and neither the tests the suite runs nor any
+  assertion, expected value or input. Note the counts the full suite
+  reports (passed, skipped…) before delegating. Then check:
+  - `git status --porcelain`: only test files changed;
+  - the full suite, the linter and the type checker (if any) are clean,
+    with the same counts as before;
+  - `git diff`: no assertion, expected value or test input changed —
+    moved into a fixture or a helper is fine, rewritten is not.
+
+  If it changed anything, commit `refactor(tests): <what changed>`. A
+  failed check discards all its changes (the code pass is committed), and
+  the pass is rerun once with a reminder of its guardrails, as for a
+  write-zone violation (step 4).
+
+Then:
 
 1. **Check before publishing.** Pushing publishes the branch, on a public
    repository to everyone. Read `git diff <default-branch>...HEAD` and the
@@ -229,8 +248,9 @@ and commit its result as in step 4, item 3. Then:
    - **An approved behavior implemented wrongly**: fix it through a new
      red/green/refactor cycle.
    - **A behavior-preserving change to production code** (clarity,
-     duplication, a lint finding): delegate it to `refactor`, with the
-     finding as its task, and check its write zone as in step 4.
+     duplication, a lint finding): delegate it to `refactor` in `code`
+     mode, with the finding as its task, and check its write zone as in
+     step 4.
    - **New behavior, or a change to existing tests**: do not implement it.
      Propose it to the user in step 7, as a change to the approved list.
    - **Documentation, configuration, PR description**: fix it yourself —

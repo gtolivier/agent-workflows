@@ -32,7 +32,7 @@ and the main session only orchestrates and checks.
 |---|---|---|---|---|
 | Red | `tdd:red` | Opus 5.5, high effort | test files only | exactly one new test fails, for the right reason |
 | Green | `tdd:green` | Sonnet 5.5 | everything but test files | the full suite is green |
-| Refactor | `tdd:refactor` | Opus 5.5, high effort | everything but test files, existing files only | the suite stayed green after every change — "nothing to refactor" is valid |
+| Refactor | `tdd:refactor` | Opus 5.5, high effort | everything but test files — in tests mode, test files only; existing files only | the suite stayed green after every change — "nothing to refactor" is valid |
 
 The strongest model goes where the test suite cannot judge the work: nothing
 tells you a red test is the *right* test, or that a refactor was worth it.
@@ -46,7 +46,8 @@ Run a feature with:
 The skill creates a `feature/<slug>` branch, proposes a list of behaviors
 (one test each) and waits for your approval, then runs one cycle per
 behavior without interrupting you, with one commit per step (`red: …`,
-`green: …`, `refactor: …`) so that each step can be checked on its own.
+`green: …`, `refactor: …`, and `refactor(tests): …` for the final tests
+pass) so that each step can be checked on its own.
 Once the feature is
 complete, it opens a pull request, lets CI and review bots run alongside an
 independent review, triages their comments and yours (fix, propose, or
@@ -66,10 +67,14 @@ criteria: no magic numbers or strings, intention-revealing names, small
 single-purpose functions, no flag arguments, no duplicated knowledge,
 comments that say why, type annotations where the project uses them. Once
 every behavior is done, one last refactor looks at the whole feature, to
-catch what no single cycle showed. The plugin needs no configuration for
-this, but rules a linter or type checker can enforce are better enforced
-there, in the project's own tool settings: every step must leave both
-clean.
+catch what no single cycle showed, in two passes: the production code
+first, then the tests alone. The tests pass leaves the production code
+untouched and keeps the same tests, every assertion, every expected value
+and every input; the orchestrator checks its zone, the test counts and the
+diff. The
+plugin needs no configuration for this, but rules a linter or type checker
+can enforce are better enforced there, in the project's own tool settings:
+every step must leave both clean.
 
 **Foreground subagents.** The orchestrator runs each subagent in the
 foreground (`run_in_background: false` on Claude Code's Agent tool) and
