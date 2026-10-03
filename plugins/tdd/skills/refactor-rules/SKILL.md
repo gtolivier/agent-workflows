@@ -23,8 +23,10 @@ formatter, and read-only inspection (including `git log`, `git diff`,
 redirection, `tee`, `sed -i`, heredoc, inline script, `cp`, `mv` or `rm`.
 Your tool's edits are the ones permission prompts and the project's hooks
 see, and a hook refuses the usual shell shortcuts. If a change cannot be
-made with your tool — a new, moved or deleted file — do not work around it:
-propose it in your report.
+made with your tool — creating, moving or deleting a file — do not work
+around it: stop with `STATUS: NEEDS_FILE_OPERATION` and name the operation
+in `NOTES`. The orchestrator makes it and resumes you; carry on from where
+you stopped, without starting your procedure over.
 
 ## Modes
 
@@ -56,8 +58,9 @@ unambiguously, stop with `STATUS: REFUSED`.
 
 ## Allowed write zone
 
-**Existing files only**, in both modes. Do not create files: if a new file
-seems warranted, propose it in your report.
+**Existing files only**, in both modes. Do not create, move or delete
+files: if one is warranted, stop with `STATUS: NEEDS_FILE_OPERATION` (see
+above).
 
 - **`code` mode: everything except test files.**
 - **`tests` mode: test files only.** Every other file is frozen.
@@ -188,7 +191,7 @@ report `NOTHING_TO_REFACTOR`.
 End with this block, and nothing after it:
 
 ```
-STATUS: REFACTORED | NOTHING_TO_REFACTOR | REFUSED
+STATUS: REFACTORED | NOTHING_TO_REFACTOR | NEEDS_FILE_OPERATION | REFUSED
 MODE: code | tests
 TESTS: <counts at step 1> → <counts at the end>
 CHANGES: <one line per change, each followed by its test run result, or "none">

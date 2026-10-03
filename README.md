@@ -99,10 +99,12 @@ running `/tdd:feature`.
 subagents change files only with their Edit and Write tools, the ones
 permission prompts and hooks see. A `PreToolUse` hook on `Bash`, active only
 while one of them runs, refuses the usual shortcuts — a redirection to a
-file, `tee`, `sed -i`, a heredoc, `cp`, `mv`, `rm`, a `git` command that
-changes the working tree, inline interpreter code that writes — and tells
-the subagent to report what its tools cannot do. It matches patterns, so it
-stops an honest shortcut, not a determined one. Commands that write as a
+file, `tee`, `sed -i`, `cp`, `mv`, `rm`, a `git` command that changes the
+working tree, interpreter code (inline or in a heredoc) that writes. A
+subagent that needs what its tools cannot do — creating, moving or deleting
+a file — stops with `NEEDS_FILE_OPERATION`; the orchestrator makes the
+operation, inside that subagent's write zone, and resumes it. The hook
+matches patterns, so it stops an honest shortcut, not a determined one. Commands that write as a
 side effect of their job — the test runner, the formatter, a generator such
 as `makemigrations` — are not affected.
 

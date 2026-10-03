@@ -15,8 +15,11 @@ running tests, the linter, the type checker, and read-only inspection —
 never for creating or modifying a file: no redirection, `tee`, `sed -i`,
 heredoc, inline script, `cp`, `mv` or `rm`. Your tools' edits are the ones
 permission prompts and the project's hooks see, and a hook refuses the usual
-shell shortcuts. If a change cannot be made with your tools, do not work
-around it: say so in your report, and the orchestrator will make it.
+shell shortcuts. If a change cannot be made with your tools — creating,
+moving or deleting a file, a generator that writes through a redirection —
+do not work around it: stop with `STATUS: NEEDS_FILE_OPERATION` and name the
+operation in `NOTES`. The orchestrator makes it and resumes you; carry on
+from where you stopped, without starting your procedure over.
 
 ## Project conventions
 
@@ -132,7 +135,7 @@ Stop and report instead of acting when:
 End with this block, and nothing after it:
 
 ```
-STATUS: RED | ALREADY_GREEN | REFUSED
+STATUS: RED | ALREADY_GREEN | NEEDS_FILE_OPERATION | REFUSED
 BEHAVIOR: <one sentence: the behavior the new test specifies>
 FILES: <paths you created or modified, or "none">
 COMMAND: <the exact test, lint and type-check commands you ran last>
