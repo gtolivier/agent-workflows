@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.7.0](https://github.com/gtolivier/agent-workflows/compare/tdd-v0.6.0...tdd-v0.7.0) (2026-10-03)
+
+
+### Features
+
+* **tdd:** refuse file writes through the shell, accept two more kinds of red ([#12](https://github.com/gtolivier/agent-workflows/issues/12)) ([a6e64de](https://github.com/gtolivier/agent-workflows/commit/a6e64dede5737699e3a133ea3c28b92e38aa9c8b))
+
 ## [0.6.0](https://github.com/gtolivier/agent-workflows/compare/tdd-v0.5.1...tdd-v0.6.0) (2026-10-01)
 
 
