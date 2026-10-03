@@ -115,9 +115,9 @@ supports it), and can gather machines over SSH.
 
 ## Enforcing "no file writes through the shell"
 
-**Status:** the rule exists, but nothing enforces it. To be done before the
-next long feature, or as soon as a write through the shell lands outside a
-write zone.
+**Status:** the rule exists, but nothing enforces it. Measured on a second
+feature: it still does not hold. Next: try option 1 — at once if a write
+through the shell lands outside a write zone.
 
 All three step skills say: "The shell is for running tests, the linter, the
 type checker, and read-only inspection. Never use it to create or modify
@@ -129,6 +129,12 @@ refactor subagent did it once. Each time, the subagent said so in its report,
 the change stayed inside its write zone, and the orchestrator's write-zone
 check after the step held; so far the cost is only a rule that does not
 hold.
+
+On the next feature (django-model-rag, feature 3: about 35 cycles), the subagents
+wrote through the shell twice: the red subagent once (cycle 4) and the
+refactor subagent once (cycle 14). Both changes stayed inside their write
+zone. Fewer than on feature 2, but the red step now does it too: no step is
+immune.
 
 **Why it matters**
 
@@ -165,7 +171,7 @@ the step's write zone.
 **Plan**
 
 - Measure first: count shell writes per step on the next feature, from the
-  subagents' reports.
+  subagents' reports. Done on feature 3 (see above).
 - Try option 1 on one repository, with the generator allow-list, and check
   that red, green and refactor all still complete a cycle.
 - Keep option 3 in any case.
