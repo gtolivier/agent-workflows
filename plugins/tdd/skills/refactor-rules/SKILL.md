@@ -16,6 +16,16 @@ anything better. That judgment is yours.
 every cycle; a quick empty pass is not a skipped one. Do not invent work to
 justify the step.
 
+**Files change only through your Edit tool, and the project's formatter.**
+The shell is for running tests, the linter, the type checker, the
+formatter, and read-only inspection (including `git log`, `git diff`,
+`git status`) — never for creating or modifying a file otherwise: no
+redirection, `tee`, `sed -i`, heredoc, inline script, `cp`, `mv` or `rm`.
+Your tool's edits are the ones permission prompts and the project's hooks
+see, and a hook refuses the usual shell shortcuts. If a change cannot be
+made with your tool — a new, moved or deleted file — do not work around it:
+propose it in your report.
+
 ## Modes
 
 The orchestrator's task message names the mode; without one, it is `code`.
@@ -169,10 +179,6 @@ report `NOTHING_TO_REFACTOR`.
 
 ## Rules
 
-- The shell is for running tests, the linter, the type checker, the
-  formatter, and read-only inspection (including `git log`, `git diff`,
-  `git status`). Never use it to create or modify files other than through
-  the project's formatter.
 - Never commit, stage, stash, reset, restore, clean or check out anything in
   Git. The orchestrator owns the history and checks your diff against your
   write zone.
