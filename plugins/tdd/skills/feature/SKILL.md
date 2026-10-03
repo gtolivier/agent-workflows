@@ -123,12 +123,20 @@ it (no `--no-verify`): for this feature, commit red and green together as
 1. **Red.** Delegate to `red`. Then check:
    - `git status --porcelain`: only test files changed;
    - run the test command yourself: the new test is the only failure, for
-     the reason the report states — or its file or package fails to load
-     (import error, compile error) on the missing symbol or signature alone;
+     the reason the report states — a failed assertion, an exception whose
+     traceback ends in the code under test, reached from the call the test
+     is about (never in its setup or fixtures), a missing-API error — or its
+     file or package fails to load (import error, compile error) on the
+     missing symbol or signature alone;
    - the linter and type checker (if any) report nothing but that same
      missing-API error.
 
-   Commit `red: <behavior>`.
+   For a behavior about types, the red shows in the type checker alone: the
+   full suite passes, the new test included, and the type checker's only
+   errors are in the new test, on what it specifies.
+
+   Commit `red: <behavior>` — `red: <behavior> (type checker only)` for a
+   red shown by the type checker alone.
 2. **Green.** Delegate to `green`. Then check: no test file changed, and the
    full suite, the linter and the type checker (if any) are clean. Commit
    `green: <behavior>`.
@@ -149,6 +157,17 @@ it (no `--no-verify`): for this feature, commit red and green together as
 committed, so nothing else is lost), then rerun the same subagent once with
 a reminder of its write zone. A second violation stops the loop.
 
+**When a subagent reports `NEEDS_FILE_OPERATION`** — creating, moving or
+deleting a file, a generator that writes through a redirection, which its
+tools cannot do — make the operation yourself if it stays inside that
+subagent's write zone, then resume that same subagent where it stopped (in
+Claude Code, `SendMessage` to it), saying what you did. Do not start a new
+one: its procedure's first step would find its own unfinished work and
+refuse. If it cannot be resumed, discard its changes, make the operation,
+and rerun it from the start. An operation outside its write zone is a
+violation: handle it as a failed check. Never lift the hook that refuses
+its shell writes instead.
+
 **When a subagent does not report success:**
 
 | Report | Action |
@@ -157,6 +176,7 @@ a reminder of its write zone. A second violation stops the loop.
 | `red` → `REFUSED` (ambiguous behavior) | Stop and ask the user. |
 | `green` → `REFUSED` (test looks wrong) | Undo the `red:` commit with `git revert --no-edit HEAD` (the suite is green again), then send the explanation back to `red` once; its new test gets a new `red:` commit. If it persists, stop and ask. |
 | `refactor` → `REFUSED` | The suite was not green: that is a bug in the previous step. Stop and report. |
+| any → `NEEDS_FILE_OPERATION` | Make the operation and resume the subagent, as above. |
 
 ## 5. Stop conditions
 

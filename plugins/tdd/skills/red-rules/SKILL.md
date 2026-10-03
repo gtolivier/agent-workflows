@@ -10,6 +10,18 @@ is one failing test that specifies one behavior. A wrong test is the most
 expensive mistake in the cycle: the green step will faithfully implement it
 and nothing downstream will notice. Take the time to get it right.
 
+**Files change only through your Edit and Write tools.** The shell is for
+running tests, the linter, the type checker, the project's generators (such
+as `makemigrations`, which write files as their job) and read-only
+inspection — never for creating or modifying a file otherwise: no
+redirection, `tee`, `sed -i`, heredoc, inline script, `cp`, `mv` or `rm`. Your tools' edits are the ones
+permission prompts and the project's hooks see, and a hook refuses the usual
+shell shortcuts. If a change cannot be made with your tools — creating,
+moving or deleting a file, a generator that writes through a redirection —
+do not work around it: stop with `STATUS: NEEDS_FILE_OPERATION` and name the
+operation in `NOTES`. The orchestrator makes it and resumes you; carry on
+from where you stopped, without starting your procedure over.
+
 ## Project conventions
 
 The orchestrator's task message gives you the project's test command, its
@@ -46,11 +58,20 @@ file, not a build or config file.
 ## Exit criterion
 
 - The new test fails, **and**
-- its failure is caused by the missing behavior: a failed assertion, or a
-  **missing-API error** on precisely what the test is about — a missing
-  symbol (import error, undefined name) or a signature that does not accept
-  the call yet (an unexpected argument, a wrong number of arguments: a
-  `TypeError` in Python, a compile error in a compiled language), **and**
+- its failure is caused by the missing behavior:
+  - a failed assertion;
+  - an **exception raised by the code under test** because the behavior is
+    missing — a `KeyError` from a lookup that does not handle the new case
+    yet, an exception other than the one the test expects. The traceback
+    must end in the code under test, reached from the call the test is
+    about, never in the test's own setup or fixtures; or
+  - a **missing-API error** on precisely what the test is about — a missing
+    symbol (import error, undefined name) or a signature that does not
+    accept the call yet (an unexpected argument, a wrong number of
+    arguments: a `TypeError` in Python, a compile error in a compiled
+    language);
+
+  **and**
 - every other test still passes, **and**
 - the linter and type checker (if any) report nothing in the test files
   but the same missing-API error: the green step cannot edit tests, so it
@@ -63,13 +84,34 @@ file or package cannot run. That error is still a valid red, provided it
 names only the missing symbol or signature and every other test file or
 package still passes.
 
+**When the behavior is about types** — what a signature accepts or rejects,
+in a project whose checks include a type checker — the new test may pass at
+run time, and the red shows in the type checker alone. That is a valid red
+when:
+
+- the full suite passes, the new test included, **and**
+- the type checker's only errors are in the new test, on precisely what it
+  specifies: a valid use the current types reject (the typed counterpart of
+  a missing-API error), or a rejection that does not happen yet — a
+  `# type: ignore[<code>]` naming the expected error code, reported as
+  unused (mypy does with `warn_unused_ignores`, part of `strict`), or a
+  failing `assert_type`, **and**
+- the linter reports nothing in the test files.
+
+If the type checker cannot report the missing rejection — unused ignores
+are not reported, and no `assert_type` would fail — the behavior cannot be
+specified that way: stop with `STATUS: REFUSED` and say so. Report a red
+shown by the type checker alone as `STATUS: RED`, its output in `OUTPUT`,
+and "type checker only" in `NOTES`.
+
 A syntax error in the test, a setup or fixture error, a loading error with
 any other cause, or a missing-API error on a misspelled name is **not** a
 valid red: fix your test and rerun.
 
-If the new test **passes** immediately, the behavior already exists. Do not
-alter the test to make it fail: stop with `STATUS: ALREADY_GREEN` and leave
-the test in place for the orchestrator to decide.
+If the new test **passes** immediately and the type checker reports
+nothing about it, the behavior already exists. Do not alter the test to
+make it fail: stop with `STATUS: ALREADY_GREEN` and leave the test in place
+for the orchestrator to decide.
 
 ## Refusal clause
 
@@ -85,8 +127,6 @@ Stop and report instead of acting when:
 
 ## Rules
 
-- The shell is for running tests, the linter, the type checker, and
-  read-only inspection. Never use it to create or modify files.
 - Never commit, stage, stash, reset, restore, clean or check out anything in
   Git. The orchestrator owns the history and checks your diff against your
   write zone.
@@ -96,7 +136,7 @@ Stop and report instead of acting when:
 End with this block, and nothing after it:
 
 ```
-STATUS: RED | ALREADY_GREEN | REFUSED
+STATUS: RED | ALREADY_GREEN | NEEDS_FILE_OPERATION | REFUSED
 BEHAVIOR: <one sentence: the behavior the new test specifies>
 FILES: <paths you created or modified, or "none">
 COMMAND: <the exact test, lint and type-check commands you ran last>
