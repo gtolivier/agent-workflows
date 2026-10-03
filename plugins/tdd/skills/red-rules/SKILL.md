@@ -11,9 +11,10 @@ expensive mistake in the cycle: the green step will faithfully implement it
 and nothing downstream will notice. Take the time to get it right.
 
 **Files change only through your Edit and Write tools.** The shell is for
-running tests, the linter, the type checker, and read-only inspection —
-never for creating or modifying a file: no redirection, `tee`, `sed -i`,
-heredoc, inline script, `cp`, `mv` or `rm`. Your tools' edits are the ones
+running tests, the linter, the type checker, the project's generators (such
+as `makemigrations`, which write files as their job) and read-only
+inspection — never for creating or modifying a file otherwise: no
+redirection, `tee`, `sed -i`, heredoc, inline script, `cp`, `mv` or `rm`. Your tools' edits are the ones
 permission prompts and the project's hooks see, and a hook refuses the usual
 shell shortcuts. If a change cannot be made with your tools — creating,
 moving or deleting a file, a generator that writes through a redirection —

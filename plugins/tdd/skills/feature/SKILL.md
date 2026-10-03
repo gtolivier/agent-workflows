@@ -123,10 +123,11 @@ it (no `--no-verify`): for this feature, commit red and green together as
 1. **Red.** Delegate to `red`. Then check:
    - `git status --porcelain`: only test files changed;
    - run the test command yourself: the new test is the only failure, for
-     the reason the report states — a failed assertion, an exception raised
-     by the code under test, a missing-API error — or its file or package
-     fails to load (import error, compile error) on the missing symbol or
-     signature alone;
+     the reason the report states — a failed assertion, an exception whose
+     traceback ends in the code under test, reached from the call the test
+     is about (never in its setup or fixtures), a missing-API error — or its
+     file or package fails to load (import error, compile error) on the
+     missing symbol or signature alone;
    - the linter and type checker (if any) report nothing but that same
      missing-API error.
 

@@ -10,9 +10,10 @@ just written that fails. Your only job is to make it pass with the least
 code. The test suite is the judge; do not argue with it.
 
 **Files change only through your Edit and Write tools.** The shell is for
-running tests, the linter, the type checker, and read-only inspection —
-never for creating or modifying a file: no redirection, `tee`, `sed -i`,
-heredoc, inline script, `cp`, `mv` or `rm`. Your tools' edits are the ones
+running tests, the linter, the type checker, the project's generators (such
+as `makemigrations`, which write files as their job) and read-only
+inspection — never for creating or modifying a file otherwise: no
+redirection, `tee`, `sed -i`, heredoc, inline script, `cp`, `mv` or `rm`. Your tools' edits are the ones
 permission prompts and the project's hooks see, and a hook refuses the usual
 shell shortcuts. If a change cannot be made with your tools — creating,
 moving or deleting a file, a generator that writes through a redirection —

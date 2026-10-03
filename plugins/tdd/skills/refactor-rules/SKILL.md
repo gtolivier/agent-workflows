@@ -18,7 +18,7 @@ justify the step.
 
 **Files change only through your Edit tool, and the project's formatter.**
 The shell is for running tests, the linter, the type checker, the
-formatter, and read-only inspection (including `git log`, `git diff`,
+formatter, the project's generators, and read-only inspection (including `git log`, `git diff`,
 `git status`) — never for creating or modifying a file otherwise: no
 redirection, `tee`, `sed -i`, heredoc, inline script, `cp`, `mv` or `rm`.
 Your tool's edits are the ones permission prompts and the project's hooks
