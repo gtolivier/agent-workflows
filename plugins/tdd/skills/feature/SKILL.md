@@ -68,10 +68,17 @@ Test command: <command>
 Lint command: <command, or "none">
 Type-check command: <command, or "none">
 Test files: <convention>
+Test pathspecs: <the same convention, as Git pathspecs>
 
 - [ ] <first behavior>
 - [ ] <second behavior>
 ```
+
+`Test pathspecs` lists Git pathspecs relative to the repository root,
+separated by spaces, that match exactly the test files — `tests/`,
+`:(glob)**/*_test.go`, `:(glob)**/test_*.py` — so that `scripts/step.sh`
+(step 4) can check each step's write zone. That script also runs the three
+commands of the checklist: the user approves them with the list.
 
 The checklist is working state: inside the Git directory it is never
 committed, and it stays out of the subagents' way — they must not learn the
@@ -115,19 +122,35 @@ content nor where it is. Beyond that, each step gets only what it needs:
 
 For each behavior, **commit after every step** — `red: <behavior>`,
 `green: <behavior>`, `refactor: <what changed>` — so that each commit shows
-one step and can be checked against its write zone (`git show --stat`). If
-a commit hook rejects a `red:` commit because the suite is red, never bypass
-it (no `--no-verify`): for this feature, commit red and green together as
-`red+green: <behavior>`, and say so in the PR description.
+one step and can be checked against its write zone.
 
-1. **Red.** Delegate to `red`. Then check:
-   - `git status --porcelain`: only test files changed;
-   - run the test command yourself: the new test is the only failure, for
-     the reason the report states — a failed assertion, an exception whose
-     traceback ends in the code under test, reached from the call the test
-     is about (never in its setup or fixtures), a missing-API error — or its
-     file or package fails to load (import error, compile error) on the
-     missing symbol or signature alone;
+**`scripts/step.sh`**, in this skill's directory, checks and commits a step
+in one call: after each report, run `bash <this skill's
+directory>/scripts/step.sh <step> "<behavior>"` from the repository. It
+checks the step's write zone against the checklist's test pathspecs, runs
+its test, lint and type-check commands, commits only when its checks pass,
+and ticks the behavior when the cycle ends. It prints one line per check
+and the last lines of each failing command — the full output is in
+`<git-dir>/tdd/<slug>.log`. Exit status 0 means committed; 1 means a check
+failed and nothing was committed; 2 is an error in the call or the
+checklist. Do not rerun its checks by hand: read its output, and judge what
+it cannot.
+
+If a commit hook rejects a `red:` commit because the suite is red, never
+bypass it (no `--no-verify`): the script leaves the red staged, and the
+next `step.sh green` commits red and green together as `red+green:
+<behavior>`. Say so in the PR description.
+
+1. **Red.** Delegate to `red`, then run `step.sh red "<behavior>"`. It
+   checks that only test files changed and commits `red: <behavior>` when
+   the suite fails — `red: <behavior> (type checker only)` when the suite
+   passes and the type checker alone fails. Then judge its output:
+   - the new test is the only failure, for the reason the report states —
+     a failed assertion, an exception whose traceback ends in the code
+     under test, reached from the call the test is about (never in its
+     setup or fixtures), a missing-API error — or its file or package
+     fails to load (import error, compile error) on the missing symbol or
+     signature alone;
    - the linter and type checker (if any) report nothing but that same
      missing-API error.
 
@@ -135,27 +158,31 @@ it (no `--no-verify`): for this feature, commit red and green together as
    full suite passes, the new test included, and the type checker's only
    errors are in the new test, on what it specifies.
 
-   Commit `red: <behavior>` — `red: <behavior> (type checker only)` for a
-   red shown by the type checker alone.
-2. **Green.** Delegate to `green`. Then check: no test file changed, and the
-   full suite, the linter and the type checker (if any) are clean. Commit
-   `green: <behavior>`.
+   If the red is not the right one, undo it — `git reset --hard HEAD^` if
+   it was committed; `git reset --hard` and deleting
+   `<git-dir>/tdd/<slug>.red-pending` if a commit hook left it staged —
+   and rerun `red` once, saying what is wrong; a second wrong red stops
+   the loop.
+2. **Green.** Delegate to `green`, then run `step.sh green "<behavior>"`. It
+   checks that no test file changed and that the full suite, the linter
+   and the type checker (if any) are clean, commits `green: <behavior>`,
+   and prints the commit's size.
 
    **Size signal.** If green needed more than a handful of lines of
    production code, or several files, the behavior was too big and the
    remaining ones probably are too. Finish this cycle, then stop (step 5)
    and propose a split of the remaining behaviors to the user rather than
    changing the list silently.
-3. **Refactor.** Delegate to `refactor` in `code` mode. Then check: no test
-   file changed, and the full suite, the linter and the type checker (if
-   any) are clean. If it changed anything, commit `refactor: <what
-   changed>`; "nothing to refactor" makes no commit.
-4. **Tick** the behavior in the checklist (`- [x]`).
+3. **Refactor.** Delegate to `refactor` in `code` mode, then run `step.sh
+   refactor "<what changed>"`, taking what changed from its report. It
+   checks as for green and commits `refactor: <what changed>` if anything
+   changed — "nothing to refactor" makes no commit — then ticks the
+   behavior in the checklist.
 
 **When a check fails**, discard the subagent's changes to out-of-zone paths
-(`git restore` / `git clean` on those paths — the previous step is
-committed, so nothing else is lost), then rerun the same subagent once with
-a reminder of its write zone. A second violation stops the loop.
+(`git restore` / `git clean` on the paths `step.sh` lists — the previous
+step is committed, so nothing else is lost), then rerun the same subagent
+once with a reminder of its write zone. A second violation stops the loop.
 
 **When a subagent reports `NEEDS_FILE_OPERATION`** — creating, moving or
 deleting a file, a generator that writes through a redirection, which its
@@ -172,7 +199,7 @@ its shell writes instead.
 
 | Report | Action |
 |---|---|
-| `red` → `ALREADY_GREEN` | Keep the test, commit it (`red: <behavior> (already green)`), skip green and refactor, note it for the final review. |
+| `red` → `ALREADY_GREEN` | Keep the test: `step.sh already-green "<behavior>"` checks it, commits it (`red: <behavior> (already green)`) and ticks the behavior. Skip green and refactor, note it for the final review. |
 | `red` → `REFUSED` (ambiguous behavior) | Stop and ask the user. |
 | `green` → `REFUSED` (test looks wrong) | Undo the `red:` commit with `git revert --no-edit HEAD` (the suite is green again), then send the explanation back to `red` once; its new test gets a new `red:` commit. If it persists, stop and ask. |
 | `refactor` → `REFUSED` | The suite was not green: that is a bug in the previous step. Stop and report. |
@@ -211,13 +238,13 @@ the tests pass checks a settled production code:
   changes only test files, and neither the tests the suite runs nor any
   assertion, expected value or input. Note the counts the full suite
   reports (passed, skipped…) before delegating. Then check:
-  - `git status --porcelain`: only test files changed;
-  - the full suite, the linter and the type checker (if any) are clean,
-    with the same counts as before;
+  - `step.sh tests`: only test files changed, and the full suite, the
+    linter and the type checker (if any) are clean — it never commits;
+  - the counts it reports are the same as before;
   - `git diff`: no assertion, expected value or test input changed —
     moved into a fixture or a helper is fine, rewritten is not.
 
-  If it changed anything, commit `refactor(tests): <what changed>`. A
+  If it changed anything, commit `refactor(tests): <what changed>` yourself. A
   failed check discards all its changes (the code pass is committed), and
   the pass is rerun once with a reminder of its guardrails, as for a
   write-zone violation (step 4).
@@ -304,5 +331,6 @@ the conversation, or by the user merging the PR themselves.
    its latest commit, and delete the branch.
 3. **Check the result.** Switch back to the default branch, pull, and check
    that CI (if any) is green on it. If it is not, stop and report.
-4. Delete `<git-dir>/tdd/<slug>.md`, and `<git-dir>/tdd/<slug>.ralph` (the
-   Stop hook's counter) if it exists.
+4. Delete `<git-dir>/tdd/<slug>.md`, and if they exist
+   `<git-dir>/tdd/<slug>.ralph` (the Stop hook's counter) and
+   `<git-dir>/tdd/<slug>.log` (`step.sh`'s output).
