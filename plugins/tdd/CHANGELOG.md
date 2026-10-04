@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.8.0](https://github.com/gtolivier/agent-workflows/compare/tdd-v0.7.0...tdd-v0.8.0) (2026-10-04)
+
+
+### Features
+
+* **tdd:** check and commit each step with one script call ([#14](https://github.com/gtolivier/agent-workflows/issues/14)) ([d540bff](https://github.com/gtolivier/agent-workflows/commit/d540bff4c42999c787199a966f650970e7288913))
+
 ## [0.7.0](https://github.com/gtolivier/agent-workflows/compare/tdd-v0.6.0...tdd-v0.7.0) (2026-10-03)
 
 
