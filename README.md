@@ -95,6 +95,15 @@ whenever the skill waits for you or for CI and reviews. The hook only reads
 the checklist — it never runs a command — and does nothing outside a
 running `/tdd:feature`.
 
+**One call per step.** After each subagent's report, the orchestrator runs
+the skill's `scripts/step.sh`: it checks the step's write zone, runs the
+test, lint and type-check commands, commits when every check passes and
+ticks the behavior at the end of a cycle, printing a few lines instead of
+the full logs. Judging the output — whether a red fails for the right
+reason — stays with the orchestrator. The script runs the commands written
+in the checklist, which you approve with the behavior list: a permission
+rule that allows the script allows those commands.
+
 **No file writes through the shell.** The red, green and refactor
 subagents change files only with their Edit and Write tools, the ones
 permission prompts and hooks see. A `PreToolUse` hook on `Bash`, active only
