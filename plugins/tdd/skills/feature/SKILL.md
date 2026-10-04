@@ -158,9 +158,11 @@ next `step.sh green` commits red and green together as `red+green:
    full suite passes, the new test included, and the type checker's only
    errors are in the new test, on what it specifies.
 
-   If the red is not the right one, undo its commit with `git reset --hard
-   HEAD^` and rerun `red` once, saying what is wrong; a second wrong red
-   stops the loop.
+   If the red is not the right one, undo it — `git reset --hard HEAD^` if
+   it was committed; `git reset --hard` and deleting
+   `<git-dir>/tdd/<slug>.red-pending` if a commit hook left it staged —
+   and rerun `red` once, saying what is wrong; a second wrong red stops
+   the loop.
 2. **Green.** Delegate to `green`, then run `step.sh green "<behavior>"`. It
    checks that no test file changed and that the full suite, the linter
    and the type checker (if any) are clean, commits `green: <behavior>`,

@@ -97,7 +97,8 @@ running `/tdd:feature`.
 
 **One call per step.** After each subagent's report, the orchestrator runs
 the skill's `scripts/step.sh`: it checks the step's write zone, runs the
-test, lint and type-check commands, commits when every check passes and
+test, lint and type-check commands, commits when the step's rule holds —
+a red when the suite fails, the other steps when every check passes — and
 ticks the behavior at the end of a cycle, printing a few lines instead of
 the full logs. Judging the output — whether a red fails for the right
 reason — stays with the orchestrator. The script runs the commands written

@@ -69,6 +69,10 @@ read -r -a test_paths <<<"$(header 'Test pathspecs')"
 
 if [ -f "$pending" ]; then
   [ "$step" = green ] || die "a red is pending (rejected by a commit hook): only green can follow it"
+  if [ "$(git write-tree)" != "$(cat "$pending")" ]; then
+    echo "green: NOT COMMITTED — changes were staged on top of the pending red"
+    exit 1
+  fi
 elif ! git diff --cached --quiet; then
   die "the index has staged changes: unstage them first"
 fi
@@ -88,22 +92,25 @@ changed() {
     git ls-files --others --exclude-standard -- "$@"
   } | sort -u
 }
-test_changes=$(changed "${test_paths[@]}")
-code_changes=$(changed . "${excludes[@]}")
-
 refuse_zone() {
   echo "$step: NOT COMMITTED — $1:"
   printf '%s\n' "$2" | sed 's/^/  /'
   exit 1
 }
-case $step in
-red | already-green | tests)
-  [ -z "$code_changes" ] || refuse_zone "files outside the test files changed" "$code_changes"
-  ;;
-green | refactor)
-  [ -z "$test_changes" ] || refuse_zone "test files changed" "$test_changes"
-  ;;
-esac
+# check_zone [<when>]: refuses changes outside the step's write zone.
+check_zone() {
+  test_changes=$(changed "${test_paths[@]}")
+  code_changes=$(changed . "${excludes[@]}")
+  case $step in
+  red | already-green | tests)
+    [ -z "$code_changes" ] || refuse_zone "files outside the test files changed$*" "$code_changes"
+    ;;
+  green | refactor)
+    [ -z "$test_changes" ] || refuse_zone "test files changed$*" "$test_changes"
+    ;;
+  esac
+}
+check_zone
 case $step in
 red | already-green) [ -n "$test_changes" ] || refuse_zone "no test file changed" "(none)" ;;
 green) [ -n "$code_changes" ] || refuse_zone "no production file changed" "(none)" ;;
@@ -186,6 +193,9 @@ green) commit_message="green: $message" ;;
 refactor) commit_message="refactor: $message" ;;
 esac
 [ "$step" = red ] || [ "$clean" = yes ] || not_committed "a check failed"
+# A command that rewrites files (a formatter, a linter's fixes) must not
+# carry changes out of the zone into the commit.
+check_zone " while the checks ran"
 
 report
 if [ "$step" = tests ]; then
