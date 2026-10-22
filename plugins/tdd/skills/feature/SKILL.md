@@ -308,24 +308,26 @@ Then:
      reply by saying who is answering (for example "**Claude (triage)**").
    - Do not use a bot's own features that write code ("fix these
      comments", "generate tests"…): they skip the triage.
-5. **Rerun the independent review** after a triage that pushed fixes, so
-   that they are reviewed too. This applies only when an independent review
-   is available (item 3), and only to it: a bot's review neither calls for
-   a rerun nor covers a fix.
-   - A **triage fix** is a commit pushed by a triage. Any other commit
-     pushed after the last independent review — a proposal the user
-     approved (step 7), a merge of the default branch, an addition the
-     user asked for — calls for a new review, even if the user had
-     approved the pull request.
-   - After a triage that pushed fixes, rerun the review and triage it the
-     same way. The fixes of a rerun's triage call for no other rerun —
-     they stay unreviewed, and step 7 lists them — unless something other
-     than triage fixes was pushed since the review before that rerun.
+5. **Rerun the independent review**, when one is available (item 3), so
+   that the triage's fixes are reviewed too.
+   - A **triage fix** is any commit a triage pushes, whatever comments it
+     answers — a bot's, the user's or the independent review's — including
+     a merge of the default branch it needs. A review is a **rerun** when
+     only triage fixes were pushed since the independent review before it.
+   - Review again whenever commits were pushed since the last independent
+     review, unless that review was a rerun and only triage fixes followed
+     it. So an approved proposal (step 7) or an addition the user asked
+     for always gets a review, even after the user approved the pull
+     request, and the fixes pushed after a rerun stay unreviewed: step 7
+     lists them.
+   - Only the independent review counts here: a bot's review is never a
+     rerun and covers no fix.
    - Every review covers the whole pull request, so post only what is
-     new. A finding that repeats one already declined links to the earlier
-     reply instead of being posted again, and the review's body counts
-     these links separately. A finding already marked fixed that comes
-     back is a new finding: the fix failed.
+     new. A finding that repeats one already declined or turned into a
+     proposal links to the earlier reply instead of being posted again,
+     and the review's body counts these links separately. A finding
+     already marked fixed that comes back is a new finding: the fix
+     failed.
 6. **Never wait on a review bot.** One that is rate-limited or late does not
    block step 7: say it has not reviewed yet.
 
@@ -340,9 +342,9 @@ reviews are still missing. **Do not merge before an explicit go-ahead** —
 given in the conversation, or by the user merging the PR themselves.
 
 A proposal the user approves is implemented as in step 4, then step 6 runs
-again from the start on the same pull request — leftover fakes, the
-whole-feature refactor, the check before publishing, the push, a new
-independent review and its triage — before approval is asked again.
+again from the start on the same pull request: item 2 updates its
+description instead of opening it, and item 5 calls for a new review.
+Approval is then asked again.
 
 ## 8. After approval
 
