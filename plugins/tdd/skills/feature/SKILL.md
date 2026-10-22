@@ -308,7 +308,26 @@ Then:
      reply by saying who is answering (for example "**Claude (triage)**").
    - Do not use a bot's own features that write code ("fix these
      comments", "generate tests"…): they skip the triage.
-5. **Never wait on a review bot.** One that is rate-limited or late does not
+5. **Rerun the independent review** (item 3), so that the triage's fixes
+   are reviewed too. A review covers every commit pushed before it, and
+   each commit is either:
+   - **new content**: a behavior added to the approved list — even one a
+     review comment proposed — or, outside the red/green/refactor cycles,
+     an addition the user asked for. The pull request's first review
+     always covers new content;
+   - or a **triage fix**: a cycle that fixes an approved behavior, a
+     refactor, a documentation or configuration fix.
+
+   The rules:
+   - After a review that covers new content, if its triage pushed fixes,
+     rerun the review once, then post and triage it the same way.
+   - A rerun that covers only triage fixes calls for no other: the fixes
+     of its triage stay unreviewed, and step 7 lists them.
+   - New content pushed after the last review calls for a new review,
+     even if the user approved it before. When it arrives before a
+     triage's rerun, one review covers both, and it counts as covering new
+     content.
+6. **Never wait on a review bot.** One that is rate-limited or late does not
    block step 7: say it has not reviewed yet.
 
 ## 7. Approval
@@ -317,8 +336,9 @@ Wait until CI (if the repository has any) is green on the PR's latest
 commit. Then set `Status: waiting-for-user — approval requested` and ask the
 user's approval with the PR link, the CI status, and a summary of the
 triage: what
-was fixed, what became a proposal, what was declined and why, which reviews
-are still missing. **Do not merge before an explicit go-ahead** — given in
+was fixed, which of those fixes no review covered (step 6, item 5), what
+became a proposal, what was declined and why, which reviews are still
+missing. **Do not merge before an explicit go-ahead** — given in
 the conversation, or by the user merging the PR themselves.
 
 ## 8. After approval
