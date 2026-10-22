@@ -308,25 +308,24 @@ Then:
      reply by saying who is answering (for example "**Claude (triage)**").
    - Do not use a bot's own features that write code ("fix these
      comments", "generate tests"…): they skip the triage.
-5. **Rerun the independent review** (item 3), so that the triage's fixes
-   are reviewed too. A review covers every commit pushed before it, and
-   each commit is either:
-   - **new content**: a behavior added to the approved list — even one a
-     review comment proposed — or, outside the red/green/refactor cycles,
-     an addition the user asked for. The pull request's first review
-     always covers new content;
-   - or a **triage fix**: a cycle that fixes an approved behavior, a
-     refactor, a documentation or configuration fix.
-
-   The rules:
-   - After a review that covers new content, if its triage pushed fixes,
-     rerun the review once, then post and triage it the same way.
-   - A rerun that covers only triage fixes calls for no other: the fixes
-     of its triage stay unreviewed, and step 7 lists them.
-   - New content pushed after the last review calls for a new review,
-     even if the user approved it before. When it arrives before a
-     triage's rerun, one review covers both, and it counts as covering new
-     content.
+5. **Rerun the independent review** after a triage that pushed fixes, so
+   that they are reviewed too. This applies only when an independent review
+   is available (item 3), and only to it: a bot's review neither calls for
+   a rerun nor covers a fix.
+   - A **triage fix** is a commit pushed by a triage. Any other commit
+     pushed after the last independent review — a proposal the user
+     approved (step 7), a merge of the default branch, an addition the
+     user asked for — calls for a new review, even if the user had
+     approved the pull request.
+   - After a triage that pushed fixes, rerun the review and triage it the
+     same way. The fixes of a rerun's triage call for no other rerun —
+     they stay unreviewed, and step 7 lists them — unless something other
+     than triage fixes was pushed since the review before that rerun.
+   - Every review covers the whole pull request, so post only what is
+     new. A finding that repeats one already declined links to the earlier
+     reply instead of being posted again, and the review's body counts
+     these links separately. A finding already marked fixed that comes
+     back is a new finding: the fix failed.
 6. **Never wait on a review bot.** One that is rate-limited or late does not
    block step 7: say it has not reviewed yet.
 
@@ -335,17 +334,22 @@ Then:
 Wait until CI (if the repository has any) is green on the PR's latest
 commit. Then set `Status: waiting-for-user — approval requested` and ask the
 user's approval with the PR link, the CI status, and a summary of the
-triage: what
-was fixed, which of those fixes no review covered (step 6, item 5), what
-became a proposal, what was declined and why, which reviews are still
-missing. **Do not merge before an explicit go-ahead** — given in
-the conversation, or by the user merging the PR themselves.
+triage: what was fixed, which of those fixes no independent review covered
+(step 6, item 5), what became a proposal, what was declined and why, which
+reviews are still missing. **Do not merge before an explicit go-ahead** —
+given in the conversation, or by the user merging the PR themselves.
+
+A proposal the user approves is implemented as in step 4, then step 6 runs
+again from the start on the same pull request — leftover fakes, the
+whole-feature refactor, the check before publishing, the push, a new
+independent review and its triage — before approval is asked again.
 
 ## 8. After approval
 
 1. **Look for late comments.** Review comments that arrived since the
-   approval request are triaged as in step 6 before merging; if any leads
-   to a change, ask for approval again.
+   approval request are triaged as in step 6, reruns included (item 5),
+   before merging; if any leads to a change, ask for approval again as in
+   step 7.
 2. **Merge.** Squash-merge the PR unless the user already merged it (one
    commit per feature on the default branch), only with CI (if any) green on
    its latest commit, and delete the branch.
