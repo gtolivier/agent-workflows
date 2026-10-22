@@ -314,12 +314,12 @@ Then:
      answers — a bot's, the user's or the independent review's — including
      a merge of the default branch it needs. A review is a **rerun** when
      only triage fixes were pushed since the independent review before it.
-   - Review again whenever commits were pushed since the last independent
-     review, unless that review was a rerun and only triage fixes followed
-     it. So an approved proposal (step 7) or an addition the user asked
-     for always gets a review, even after the user approved the pull
-     request, and the fixes pushed after a rerun stay unreviewed: step 7
-     lists them.
+   - Before step 7, run, post and triage a new independent review (items 3
+     and 4) whenever commits were pushed since the last one, unless it was
+     a rerun and only triage fixes followed it. So an approved proposal
+     (step 7) or an addition the user asked for always gets a review, even
+     after the user approved the pull request, and the fixes pushed after
+     a rerun stay unreviewed: step 7 lists them.
    - Only the independent review counts here: a bot's review is never a
      rerun and covers no fix.
    - Every review covers the whole pull request, so post only what is
