@@ -52,8 +52,9 @@ Once the feature is
 complete, it opens a pull request, lets CI and review bots run alongside an
 independent review, triages their comments and yours (fix, propose, or
 reply why not) — anyone else's are reported to you, not acted on — reruns
-the independent review on its fixes, and only then asks for your approval. Nothing is merged without it; the merge is a
-squash, one commit per feature.
+the independent review on its fixes, and only then asks for your approval.
+Nothing is merged without it; the merge is a squash, one commit per
+feature.
 
 **Baby steps.** Each behavior is the smallest observable increment, ordered
 from the simplest case to the most general (Zero, One, Many, Boundaries,
