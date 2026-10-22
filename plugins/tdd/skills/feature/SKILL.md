@@ -308,7 +308,27 @@ Then:
      reply by saying who is answering (for example "**Claude (triage)**").
    - Do not use a bot's own features that write code ("fix these
      comments", "generate tests"…): they skip the triage.
-5. **Never wait on a review bot.** One that is rate-limited or late does not
+5. **Rerun the independent review**, when one is available (item 3), so
+   that the triage's fixes are reviewed too.
+   - A **triage fix** is any commit a triage pushes, whatever comments it
+     answers — a bot's, the user's or the independent review's — including
+     a merge of the default branch it needs. A review is a **rerun** when
+     only triage fixes were pushed since the independent review before it.
+   - Before step 7, run, post and triage a new independent review (items 3
+     and 4) whenever commits were pushed since the last one, unless it was
+     a rerun and only triage fixes followed it. So an approved proposal
+     (step 7) or an addition the user asked for always gets a review, even
+     after the user approved the pull request, and the fixes pushed after
+     a rerun stay unreviewed: step 7 lists them.
+   - Only the independent review counts here: a bot's review is never a
+     rerun and covers no fix.
+   - Every review covers the whole pull request, so post only what is
+     new. A finding that repeats one already declined or turned into a
+     proposal links to the earlier reply instead of being posted again,
+     and the review's body counts these links separately. A finding
+     already marked fixed that comes back is a new finding: the fix
+     failed.
+6. **Never wait on a review bot.** One that is rate-limited or late does not
    block step 7: say it has not reviewed yet.
 
 ## 7. Approval
@@ -316,16 +336,22 @@ Then:
 Wait until CI (if the repository has any) is green on the PR's latest
 commit. Then set `Status: waiting-for-user — approval requested` and ask the
 user's approval with the PR link, the CI status, and a summary of the
-triage: what
-was fixed, what became a proposal, what was declined and why, which reviews
-are still missing. **Do not merge before an explicit go-ahead** — given in
-the conversation, or by the user merging the PR themselves.
+triage: what was fixed, which of those fixes no independent review covered
+(step 6, item 5), what became a proposal, what was declined and why, which
+reviews are still missing. **Do not merge before an explicit go-ahead** —
+given in the conversation, or by the user merging the PR themselves.
+
+A proposal the user approves is implemented as in step 4, then step 6 runs
+again from the start on the same pull request: item 2 updates its
+description instead of opening it, and item 5 calls for a new review.
+Approval is then asked again.
 
 ## 8. After approval
 
 1. **Look for late comments.** Review comments that arrived since the
-   approval request are triaged as in step 6 before merging; if any leads
-   to a change, ask for approval again.
+   approval request are triaged as in step 6, reruns included (item 5),
+   before merging; if any leads to a change, ask for approval again as in
+   step 7.
 2. **Merge.** Squash-merge the PR unless the user already merged it (one
    commit per feature on the default branch), only with CI (if any) green on
    its latest commit, and delete the branch.
