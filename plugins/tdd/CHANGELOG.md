@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.9.0](https://github.com/gtolivier/agent-workflows/compare/tdd-v0.8.0...tdd-v0.9.0) (2026-10-22)
+
+
+### Features
+
+* **tdd:** rerun the independent review on the triage's fixes ([#16](https://github.com/gtolivier/agent-workflows/issues/16)) ([d27c96a](https://github.com/gtolivier/agent-workflows/commit/d27c96a6c362b2462ad35a2d7d9a63665dbf81ac))
+
 ## [0.8.0](https://github.com/gtolivier/agent-workflows/compare/tdd-v0.7.0...tdd-v0.8.0) (2026-10-04)
 
 
