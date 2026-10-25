@@ -27,7 +27,13 @@ README and build files:
   any;
 - the **test files** convention: a test directory, or a naming pattern for
   test files next to the code (`*_test.go`, `*.test.ts`, `test_*.py`…), plus
-  test-only support files (helpers, fixtures, test data).
+  test-only support files (helpers, fixtures, test data);
+- optionally, a **focused test command**: the test command restricted to
+  given test files, written with `{files}` where they go — and, if the
+  suite runs in several configurations, in one of them, without a coverage
+  report: whatever makes a run on a few files fast. Try it once on an
+  existing test file: it must run that file's tests, and only them;
+  otherwise leave it out.
 
 Stop and tell the user if any of these fails:
 
@@ -65,6 +71,7 @@ the output of `git rev-parse --git-dir`, in exactly this shape:
 ```
 Status: waiting-for-user — behavior list to approve
 Test command: <command>
+Focused test command: <the test command on the test files given in place of {files}, or "none">
 Lint command: <command, or "none">
 Type-check command: <command, or "none">
 Test files: <convention>
@@ -77,8 +84,11 @@ Test pathspecs: <the same convention, as Git pathspecs>
 `Test pathspecs` lists Git pathspecs relative to the repository root,
 separated by spaces, that match exactly the test files — `tests/`,
 `:(glob)**/*_test.go`, `:(glob)**/test_*.py` — so that `scripts/step.sh`
-(step 4) can check each step's write zone. That script also runs the three
-commands of the checklist: the user approves them with the list.
+(step 4) can check each step's write zone. That script also runs the
+test, lint and type-check commands of the checklist: the user approves them
+with the list. The focused test command is for the subagents' working runs
+(step 4); `step.sh` never runs it — every commit is checked against the
+full suite.
 
 The checklist is working state: inside the Git directory it is never
 committed, and it stays out of the subagents' way — they must not learn the
@@ -120,6 +130,22 @@ content nor where it is. Beyond that, each step gets only what it needs:
 | `green` | only "make the failing test pass" | the behavior sentence, the reference, the other behaviors: the test is its only specification, so that it implements the test and not a sentence |
 | `refactor` | only "improve this cycle's changes" in `code` mode, with the cycle's commit range (`<red commit>^..<green commit>`) | the behavior sentence, the other behaviors |
 
+Every delegation also passes the focused test command, if the checklist has
+one, and the **starting point**: the commit where `step.sh` last found the
+suite green, so that the subagent checks that nothing moved instead of
+running the suite again.
+
+- To `red` and `refactor`: "the suite is green at `<sha>` (step.sh)".
+- To `green`: "the red is committed at `<sha>`; step.sh found its new test
+  is the only failure" — or, when a commit hook rejected it, "the red is
+  staged on top of `<sha>`; …".
+
+State it only for a tree `step.sh` checked: a commit it made, a
+`refactor(tests):` commit of the tree `step.sh tests` checked, a revert of
+a red (it restores a checked tree), or the branch's starting commit,
+checked in step 1. After any other commit — a merge of the default branch,
+a fix you committed yourself — run `step.sh check` first.
+
 For each behavior, **commit after every step** — `red: <behavior>`,
 `green: <behavior>`, `refactor: <what changed>` — so that each commit shows
 one step and can be checked against its write zone.
@@ -134,7 +160,8 @@ and the last lines of each failing command — the full output is in
 `<git-dir>/tdd/<slug>.log`. Exit status 0 means committed; 1 means a check
 failed and nothing was committed; 2 is an error in the call or the
 checklist. Do not rerun its checks by hand: read its output, and judge what
-it cannot.
+it cannot. `step.sh check` runs the same checks on a clean working tree,
+commits nothing, and prints the commit it checked: `checked <sha>: clean`.
 
 If a commit hook rejects a `red:` commit because the suite is red, never
 bypass it (no `--no-verify`): the script leaves the red staged, and the
@@ -181,8 +208,24 @@ next `step.sh green` commits red and green together as `red+green:
 
 **When a check fails**, discard the subagent's changes to out-of-zone paths
 (`git restore` / `git clean` on the paths `step.sh` lists — the previous
-step is committed, so nothing else is lost), then rerun the same subagent
-once with a reminder of its write zone. A second violation stops the loop.
+step is committed, so nothing else is lost), then resume the same subagent
+(in Claude Code, `SendMessage` to it) once with a reminder of its write
+zone; if it cannot be resumed, discard all its changes and rerun it from the
+start. A second violation stops the loop.
+
+**When the suite, the linter or the type checker fails** in `step.sh green`
+or `step.sh refactor`, the write zone being right, the subagent's working
+runs missed it. Resume the same subagent (in Claude Code, `SendMessage` to
+it) with the failing lines `step.sh` printed, then run `step.sh` again.
+
+- `green`: two resumes that still fail make three failed attempts: stop
+  (step 5). If it cannot be resumed, discard its changes (`git restore .`,
+  and `git clean -f` on the files it created — the red is committed or
+  staged) and rerun it from the start with those lines.
+- `refactor`: if the resume still fails, or it cannot be resumed, discard
+  its changes the same way and run `step.sh refactor`: it finds nothing
+  changed and ticks the behavior without a commit. Say so in the PR
+  description.
 
 **When a subagent reports `NEEDS_FILE_OPERATION`** — creating, moving or
 deleting a file, a generator that writes through a redirection, which its
@@ -202,7 +245,7 @@ its shell writes instead.
 | `red` → `ALREADY_GREEN` | Keep the test: `step.sh already-green "<behavior>"` checks it, commits it (`red: <behavior> (already green)`) and ticks the behavior. Skip green and refactor, note it for the final review. |
 | `red` → `REFUSED` (ambiguous behavior) | Stop and ask the user. |
 | `green` → `REFUSED` (test looks wrong) | Undo the `red:` commit with `git revert --no-edit HEAD` (the suite is green again), then send the explanation back to `red` once; its new test gets a new `red:` commit. If it persists, stop and ask. |
-| `refactor` → `REFUSED` | The suite was not green: that is a bug in the previous step. Stop and report. |
+| any → `REFUSED` (starting point), or `refactor` → `REFUSED` (its first tests fail) | `HEAD` or the working tree is not what you announced, or the suite is not green there after all — a test that depends on its environment or on chance. Stop and report. |
 | any → `NEEDS_FILE_OPERATION` | Make the operation and resume the subagent, as above. |
 
 ## 5. Stop conditions
@@ -236,8 +279,10 @@ the tests pass checks a settled production code:
   and commit its result as in step 4, item 3.
 - **Tests pass.** "Improve this feature's tests", in `tests` mode: it
   changes only test files, and neither the tests the suite runs nor any
-  assertion, expected value or input. Note the counts the full suite
-  reports (passed, skipped…) before delegating. Then check:
+  assertion, expected value or input. Before delegating, note the counts
+  the full suite reported (passed, skipped…) on the commit it starts from,
+  in `step.sh`'s output for that commit — or run `step.sh check`, which
+  also gives the starting point. Then check:
   - `step.sh tests`: only test files changed, and the full suite, the
     linter and the type checker (if any) are clean — it never commits;
   - the counts it reports are the same as before;

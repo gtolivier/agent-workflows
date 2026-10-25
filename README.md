@@ -31,8 +31,8 @@ and the main session only orchestrates and checks.
 | Step | Subagent | Model | Writes | Stops when |
 |---|---|---|---|---|
 | Red | `tdd:red` | Opus 5.5, high effort | test files only | exactly one new test fails, for the right reason |
-| Green | `tdd:green` | Sonnet 5.5 | everything but test files | the full suite is green |
-| Refactor | `tdd:refactor` | Opus 5.5, high effort | everything but test files — in tests mode, test files only; existing files only | the suite stayed green after every change — "nothing to refactor" is valid |
+| Green | `tdd:green` | Sonnet 5.5 | everything but test files | the failing test and the tests around it pass — then the full suite, before the commit |
+| Refactor | `tdd:refactor` | Opus 5.5, high effort | everything but test files — in tests mode, test files only; existing files only | the tests it runs stayed green after every change, and the full suite at the end — "nothing to refactor" is valid |
 
 The strongest model goes where the test suite cannot judge the work: nothing
 tells you a red test is the *right* test, or that a refactor was worth it.
@@ -105,6 +105,15 @@ the full logs. Judging the output — whether a red fails for the right
 reason — stays with the orchestrator. The script runs the commands written
 in the checklist, which you approve with the behavior list: a permission
 rule that allows the script allows those commands.
+
+**The full suite runs before each commit, and only there.** Each subagent
+starts from the commit where `step.sh` last found the suite green: it
+checks that nothing moved since — the same commit, a clean working tree —
+instead of running the suite again. While it works, it runs the tests
+concerned with an optional **focused test command** from the checklist
+(the test command with `{files}` where the test files go), or the full
+suite without one. So a cycle runs the full suite two to four times: once
+per commit, plus a rerun when a step's work breaks a test it did not run.
 
 **No file writes through the shell.** The red, green and refactor
 subagents change files only with their Edit and Write tools, the ones
