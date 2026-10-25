@@ -35,16 +35,17 @@ worktree:
    a fetch; step 8 must not remove the worktree it runs in, and should leave
    the cleanup to the end of the session (Claude Code offers it when a
    worktree session exits).
-2. **Sessions started in a parent folder.** When a session starts in a
-   folder that holds several repositories, the Stop hook takes the first
-   running feature it finds. This already goes wrong today, without
-   worktrees, as soon as two sessions started in the same parent folder
-   each run a feature: one session can be relaunched for the other's
-   feature. Rule until then: one running feature per parent folder, or one
-   session per repository or worktree, started inside it. Making the hook
-   session-aware (it receives a `session_id`) would need the checklist to
-   record its owning session, which breaks resuming a feature from a new
-   session; the "one session per worktree" rule is simpler.
+2. **Sessions started in a parent folder.** The Stop hook looks at the
+   repository holding the session's current directory (its `cwd` input
+   follows the session's `cd`), and the skill `cd`s into its repository.
+   From a folder above several repositories, the hook never relaunches and
+   only reports the running features, so two sessions started in the same
+   parent folder can no longer relaunch each other. What remains: a
+   session whose shell goes back to the parent folder loses the loop.
+   Making the hook session-aware (it receives a `session_id`) would need
+   the checklist to record its owning session, which breaks resuming a
+   feature from a new session; the "one session per worktree" rule is
+   simpler.
 3. **Project settings.** A new worktree is a fresh checkout: git-ignored
    files such as `.claude/settings.local.json` (for example one holding a
    restricted GitHub token) are not in it. Claude Code can copy them with a

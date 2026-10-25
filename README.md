@@ -88,13 +88,14 @@ difference in our tests.
 **Ralph loop.** A Stop hook keeps a running feature going. The skill keeps a
 `Status:` line at the top of its checklist; while it says `running`, the hook
 blocks the session from stopping and relaunches it, until three relaunches
-pass without progress (a newly ticked behavior or a new commit). It finds
-the feature whether the session runs in its repository or in the folder
-above it — in that second case, with one running feature at a time (see the
-[roadmap](ROADMAP.md) for parallel features). It lets the session stop
-whenever the skill waits for you or for CI and reviews. The hook only reads
-the checklist — it never runs a command — and does nothing outside a
-running `/tdd:feature`.
+pass without progress (a newly ticked behavior or a new commit). It looks
+at the repository the session's current directory is in, so the skill
+`cd`s into it when the session started in the folder above. From such a
+folder, the hook never relaunches: it cannot tell which session runs a
+feature found there, and only reports the running features. It lets the
+session stop whenever the skill waits for you or for CI and reviews. The
+hook only reads the checklist — it never runs a command — and does nothing
+outside a running `/tdd:feature`.
 
 **One call per step.** After each subagent's report, the orchestrator runs
 the skill's `scripts/step.sh`: it checks the step's write zone, runs the
