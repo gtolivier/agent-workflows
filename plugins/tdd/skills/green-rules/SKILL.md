@@ -47,25 +47,46 @@ unambiguously, stop with `STATUS: REFUSED`.
 
 **Everything except test files.**
 
+## Starting point and working runs
+
+**Starting point.** The task message names the red commit — or, when a
+commit hook rejected it, the commit the red is staged on top of. Before
+writing anything, check that `git rev-parse HEAD` is that commit and that
+`git status --porcelain` prints nothing — for a staged red, that `git diff
+--name-only` prints nothing. Otherwise stop with `STATUS: REFUSED`. The
+orchestrator already found the red's new test to be the suite's only
+failure: do not run the full suite to check it again.
+
+**Working runs.** While you work, run the focused test command the task
+message gives, with `{files}` replaced by the test files concerned; without
+one, the full test command. The orchestrator runs the full suite, the
+linter and the type checker before it commits your work.
+
 ## Procedure
 
-1. Run the full test suite, and the type checker if the project has one,
-   before writing anything. The only failure must be the red step's new
-   test: either that single test fails, or its file or package fails to load
+1. Check the starting point (above). Then, before writing anything, run
+   the red's test files — the test files among `git diff --name-only HEAD^
+   HEAD`, or `git diff --cached --name-only` for a staged red — with the
+   focused test command (without one, the full suite), and the type
+   checker if the project has one. The only failure must be the red step's
+   new test: either that single test fails, or its file or package fails to load
    (import error, compile error) solely because of the missing symbol or
-   signature the new test uses, or — when the behavior is about types — the
-   suite passes and the type checker's only errors are in the new test. If
+   signature the new test uses, or — when the behavior is about types —
+   those tests pass and the type checker's only errors are in the new test. If
    nothing fails, or anything else fails, stop with `STATUS: REFUSED`: the
    cycle is not in the state you were promised.
 2. Read the failing test and the code it exercises.
 3. Write the minimal implementation that makes it pass.
-4. Run the full suite, and the linter and type checker if the project has
-   them. Iterate until all are clean.
+4. Run the red's test files and the test files that exercise the code you
+   changed with the focused test command (without one, the full suite),
+   and the linter and type checker if the project has them. Iterate until
+   all are clean.
 
 ## Exit criterion
 
-The **full** test suite passes, and the linter and type checker (if any)
-report nothing.
+Your last test runs pass, and the linter and type checker (if any) report
+nothing. The orchestrator then runs the full suite; if it fails, it resumes
+you with the failing lines: fix them as part of this same step.
 
 ## Refusal clause
 

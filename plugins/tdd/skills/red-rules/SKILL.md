@@ -42,18 +42,32 @@ unambiguously, stop with `STATUS: REFUSED`.
 **Test files only.** Nothing else — not a stub, not a new module or package
 file, not a build or config file.
 
+## Starting point and working runs
+
+**Starting point.** The task message names the commit where the suite was
+last found green. Before writing anything, check that `git rev-parse HEAD`
+is that commit and that `git status --porcelain` prints nothing; otherwise
+stop with `STATUS: REFUSED`: a change you did not make would make your
+failure impossible to attribute. Do not run the suite to check it again:
+nothing changed since.
+
+**Working runs.** While you work, run the focused test command the task
+message gives, with `{files}` replaced by the test files concerned; without
+one, the full test command. The orchestrator runs the full suite, the
+linter and the type checker before it commits your work.
+
 ## Procedure
 
-1. Run the full test suite **before writing anything**. It must be green.
-   If it is not, stop with `STATUS: REFUSED`: a failure you did not cause
-   would make yours impossible to attribute.
+1. Check the starting point (above).
 2. Read the existing tests and the code under test, so the new test matches
    their style and helpers and does not duplicate an existing test.
 3. Write **exactly one** new test case for the behavior you were given.
    Shared test helpers or fixtures may be added if the test needs them. Do
    not modify the assertions of existing tests.
-4. Run the full suite again, then the linter and type checker, if the
-   project has them.
+4. Run the new test's file with the focused test command, then the linter
+   and type checker, if the project has them. If you changed another test
+   file — a shared helper, a fixture, a test configuration — run the full
+   suite instead: other tests depend on it.
 
 ## Exit criterion
 
@@ -72,7 +86,7 @@ file, not a build or config file.
     language);
 
   **and**
-- every other test still passes, **and**
+- every other test you ran still passes, **and**
 - the linter and type checker (if any) report nothing in the test files
   but the same missing-API error: the green step cannot edit tests, so it
   could not fix anything else.
@@ -82,14 +96,14 @@ at the top of the file makes the runner report a collection error, a
 compiled language fails to compile the test package — the other tests of that
 file or package cannot run. That error is still a valid red, provided it
 names only the missing symbol or signature and every other test file or
-package still passes.
+package you ran still passes.
 
 **When the behavior is about types** — what a signature accepts or rejects,
 in a project whose checks include a type checker — the new test may pass at
 run time, and the red shows in the type checker alone. That is a valid red
 when:
 
-- the full suite passes, the new test included, **and**
+- the tests you ran pass, the new test included, **and**
 - the type checker's only errors are in the new test, on precisely what it
   specifies: a valid use the current types reject (the typed counterpart of
   a missing-API error), or a rejection that does not happen yet — a

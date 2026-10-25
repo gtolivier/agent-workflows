@@ -1,6 +1,6 @@
 ---
 name: refactor-rules
-description: Rules of the refactor step of a TDD cycle — improve the structure of the code changed in a given range (usually this cycle) while the suite stays green after every change — the production code in code mode, only the tests in tests mode; "nothing to refactor" is a valid outcome. Loaded by the refactor subagent; not meant to be invoked directly.
+description: Rules of the refactor step of a TDD cycle — improve the structure of the code changed in a given range (usually this cycle) while the tests stay green after every change — the production code in code mode, only the tests in tests mode; "nothing to refactor" is a valid outcome. Loaded by the refactor subagent; not meant to be invoked directly.
 ---
 
 # Refactor step
@@ -65,25 +65,41 @@ above).
 - **`code` mode: everything except test files.**
 - **`tests` mode: test files only.** Every other file is frozen.
 
+## Starting point and working runs
+
+**Starting point.** The task message names the commit where the suite was
+last found green. Before touching anything, check that `git rev-parse HEAD`
+is that commit and that `git status --porcelain` prints nothing; otherwise
+stop with `STATUS: REFUSED`. Do not run the suite to check it again:
+nothing changed since.
+
+**Working runs.** While you work, run the focused test command the task
+message gives, with `{files}` replaced by the test files concerned; without
+one, the full test command. The orchestrator runs the full suite, the
+linter and the type checker before it commits your work.
+
 ## Procedure
 
-1. Run the full test suite before touching anything, and note the counts
-   it reports (passed, skipped, and any other category). If a single test fails, stop with `STATUS: REFUSED`
-   without modifying anything.
+1. Check the starting point (above).
 2. Look at the changes the orchestrator names — a commit range such as
    `<red commit>^..<green commit>` or `<default-branch>..HEAD`
-   (`git log -p <range>`), or a review finding — plus any uncommitted
-   change (`git diff HEAD`); in `tests` mode, only the test files among
-   them. Read their surroundings for context.
+   (`git log -p <range>`), or a review finding; in `tests` mode, only the
+   test files among them. Read their surroundings for context.
 3. Check them against every **clean code criterion** below — in `tests`
    mode, the **test criteria** too. If none is clearly violated, stop with
    `STATUS: NOTHING_TO_REFACTOR` and one sentence saying why.
-4. Otherwise, make **one** small change, run the full suite, and only then
-   make the next one. If a change turns the suite red, undo that change by
-   editing it back — never with `git checkout`, `git restore`, `git clean`,
-   `git stash` or `git reset`, which would also discard your earlier
-   changes that were still green.
-5. Finish with the linter, type checker and formatter, if the project has
+4. Otherwise, before the first change, pick the test files that guard what
+   you will change: the test files in the range, and those that exercise
+   the code you will touch. Run them once with the focused test command
+   (without one, the full suite) and note the counts it reports (passed,
+   skipped, and any other category). If a single test fails, stop with
+   `STATUS: REFUSED` without modifying anything.
+5. Make **one** small change, run those same tests, and only then make the
+   next one. If a change turns them red, undo that change by editing it
+   back — never with `git checkout`, `git restore`, `git clean`, `git
+   stash` or `git reset`, which would also discard your earlier changes
+   that were still green.
+6. Finish with the linter, type checker and formatter, if the project has
    them.
 
 ## Clean code criteria
@@ -148,11 +164,12 @@ win: leave it.
 In `tests` mode, the tests are the specification: you change how they are
 written, never what they check.
 
-- **The same tests.** The suite reports the same counts at the end as in
-  step 1 — passed, skipped and every other category: no test added,
-  removed, merged or split, and none skipped, marked as expected to fail or
-  disabled. A parameterized case counts as a test. Renaming a test is
-  allowed.
+- **The same tests.** Your last run reports the same counts as your first
+  one (step 4), on the same files — passed, skipped and every other
+  category — and the orchestrator compares the full suite's counts too: no
+  test added, removed, merged or split, and none skipped, marked as
+  expected to fail or disabled. A parameterized case counts as a test.
+  Renaming a test is allowed.
 - **No assertion, expected value or input changed.** Every assertion stays
   as written — the same check, the same expected value, the same message —
   and every test gets the same inputs, even when they move to a fixture or
@@ -160,13 +177,16 @@ written, never what they check.
 
 ## Exit criterion
 
-The full suite has been green after **every** change, not only at the end,
-and the linter and type checker (if any) report nothing. In `tests` mode,
-the guardrails hold.
+The tests you run have been green after **every** change, not only at the
+end, and the linter and type checker (if any) report nothing. In `tests`
+mode, the guardrails hold. The orchestrator runs the full suite once,
+before committing; if it fails, it resumes you with the failing lines: find
+the change that broke it and undo it by editing it back.
 
 ## Refusal clause
 
-Stop with `STATUS: REFUSED` when the suite is not green when you start.
+Stop with `STATUS: REFUSED` when the starting point is not the one the task
+message names, or when the tests you run first are not green.
 
 Do not make an improvement that would:
 
@@ -193,7 +213,7 @@ End with this block, and nothing after it:
 ```
 STATUS: REFACTORED | NOTHING_TO_REFACTOR | NEEDS_FILE_OPERATION | REFUSED
 MODE: code | tests
-TESTS: <counts at step 1> → <counts at the end>
+TESTS: <counts of your first run> → <counts of your last run>, or "not run"
 CHANGES: <one line per change, each followed by its test run result, or "none">
 FILES: <paths you modified, or "none">
 COMMAND: <the exact test, lint and type-check commands you ran last>

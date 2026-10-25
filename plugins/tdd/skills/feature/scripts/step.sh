@@ -9,18 +9,23 @@
 #                                     anything changed, ticks
 #   step.sh tests                     all clean, test files only; never
 #                                     commits (the diff needs reading first)
+#   step.sh check                     all clean on a clean working tree;
+#                                     never commits, prints the commit checked
 #
 # The orchestrator runs it after each subagent's report, from the
 # repository, on its feature/<slug> branch. It checks the write zone first
 # (only test files for red, already-green and tests; none for green and
-# refactor), then runs the test, lint and type-check commands of the
-# checklist, and commits only when every check passes. Ticking marks the
+# refactor; no change at all for check), then runs the test, lint and
+# type-check commands of the checklist, and commits only when every check
+# passes. Ticking marks the
 # first unchecked behavior of the checklist.
 #
 # It prints one line per check and the last lines of each failing command;
 # the full output goes to <git-dir>/tdd/<slug>.log. Exit status: 0 when the
 # step is committed (or checked, for tests), 1 when a check fails — nothing
-# is committed then — and 2 on a usage or setup error.
+# is committed then — and 2 on a usage or setup error. For check, 0 means
+# the commit it prints is clean: the orchestrator tells the subagents the
+# suite is green there, so that they need not run it again.
 #
 # Judging what the output means stays with the orchestrator: whether a red
 # fails for the right reason, whether the test counts are unchanged. Unlike
@@ -42,8 +47,8 @@ step=${1:-}
 message=${2:-}
 case $step in
 red | already-green | green) [ -n "$message" ] || die "$step needs the behavior as its second argument" ;;
-refactor | tests) ;;
-*) die "usage: step.sh red|already-green|green|refactor|tests [<message>]" ;;
+refactor | tests | check) ;;
+*) die "usage: step.sh red|already-green|green|refactor|tests|check [<message>]" ;;
 esac
 
 top=$(git rev-parse --show-toplevel 2>/dev/null) || die "not in a Git repository"
@@ -108,8 +113,14 @@ check_zone() {
   green | refactor)
     [ -z "$test_changes" ] || refuse_zone "test files changed$*" "$test_changes"
     ;;
+  check)
+    [ -z "$test_changes$code_changes" ] || refuse_zone "files changed$*" "$(changed .)"
+    ;;
   esac
 }
+if [ "$step" = check ] && [ -n "$(changed .)" ]; then
+  die "the working tree has changes: check verifies a commit, commit or discard them first"
+fi
 check_zone
 case $step in
 red | already-green) [ -n "$test_changes" ] || refuse_zone "no test file changed" "(none)" ;;
@@ -172,7 +183,11 @@ report() {
 }
 not_committed() {
   report
-  echo "$step: NOT COMMITTED — $1"
+  if [ "$step" = check ]; then
+    echo "check: NOT CLEAN at $(git rev-parse --short HEAD) — $1"
+  else
+    echo "$step: NOT COMMITTED — $1"
+  fi
   exit 1
 }
 
@@ -198,10 +213,16 @@ esac
 check_zone " while the checks ran"
 
 report
-if [ "$step" = tests ]; then
+case $step in
+tests)
   echo "tests: checked, not committed"
   exit 0
-fi
+  ;;
+check)
+  echo "checked $(git rev-parse --short HEAD): clean"
+  exit 0
+  ;;
+esac
 
 if [ -f "$pending" ]; then
   commit_message="red+green: $message"
