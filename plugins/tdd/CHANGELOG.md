@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.10.0](https://github.com/gtolivier/agent-workflows/compare/tdd-v0.9.0...tdd-v0.10.0) (2026-10-25)
+
+
+### Features
+
+* **tdd:** run focused tests while working, the full suite only in step.sh ([#18](https://github.com/gtolivier/agent-workflows/issues/18)) ([4e8675b](https://github.com/gtolivier/agent-workflows/commit/4e8675b581d873ae129b0c1909b1866f55598920))
+
+
+### Bug Fixes
+
+* **tdd:** never relaunch from a folder above the repositories ([#19](https://github.com/gtolivier/agent-workflows/issues/19)) ([53ab588](https://github.com/gtolivier/agent-workflows/commit/53ab5887b8966b2cbad1fa2166340a9d7ec61bce))
+
 ## [0.9.0](https://github.com/gtolivier/agent-workflows/compare/tdd-v0.8.0...tdd-v0.9.0) (2026-10-22)
 
 
