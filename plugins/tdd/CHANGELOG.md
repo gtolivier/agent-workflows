@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.11.0](https://github.com/gtolivier/agent-workflows/compare/tdd-v0.10.1...tdd-v0.11.0) (2026-11-01)
+
+
+### Features
+
+* **tdd:** hand over the next step after the merge ([#23](https://github.com/gtolivier/agent-workflows/issues/23)) ([4b992e5](https://github.com/gtolivier/agent-workflows/commit/4b992e5289deb76bfcc656d300de2b92a4634d80))
+
 ## [0.10.1](https://github.com/gtolivier/agent-workflows/compare/tdd-v0.10.0...tdd-v0.10.1) (2026-11-01)
 
 
