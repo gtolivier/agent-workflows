@@ -1,0 +1,47 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      # setup-uv publishes no major tags (no @v10): pin the full version.
+      - uses: astral-sh/setup-uv@v10.2.0
+      # ruff only: neither the project nor its runtime dependencies.
+      - run: uv run --locked --only-group dev ruff check
+      - run: uv run --locked --only-group dev ruff format --check
+
+  typecheck:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v10.2.0
+        with:
+          # mypy targets the oldest supported Python (python_version in
+          # pyproject.toml), whatever runs it.
+          python-version: "@PYTHON_NEWEST@"
+          enable-cache: true
+      - run: uv run --locked --group typecheck mypy
+
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # The oldest and the newest supported Python. The job names are the
+        # checks a merge requires (.project-init.yml): keep them in sync.
+        python: [@PYTHON_MATRIX@]
+    name: test (python ${{ matrix.python }})
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v10.2.0
+        with:
+          python-version: ${{ matrix.python }}
+          enable-cache: true
+      - run: uv sync --locked
+      - run: uv run --no-sync pytest

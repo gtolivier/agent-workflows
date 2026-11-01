@@ -13,7 +13,7 @@
     {
       "name": "project-init",
       "source": "./plugins/project-init",
-      "description": "Set up a machine, a workspace and its repositories with a common layer: git hooks that block secrets, GitHub settings, and more to come."
+      "description": "Set up a machine, a workspace and its repositories with a common layer: git hooks that block secrets, a workspace AGENTS.md over its repositories, new repositories from their stack's generator with license, CI and test-first rules, and GitHub settings."
     }
   ]
 }
