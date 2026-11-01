@@ -25,9 +25,9 @@ from where you stopped, without starting your procedure over.
 ## Project conventions
 
 The orchestrator's task message gives you the project's test command, its
-lint and type-check commands (if any) and its **test files** convention. If
-it does not, find them in the project's `AGENTS.md`, or failing that its
-README and build files.
+lint and type-check commands (if any), its **test files** convention and the
+**rendering tests** it asks for, if any. If it does not, find them in the
+project's `AGENTS.md`, or failing that its README and build files.
 
 **Test files** are the files the project's test runner treats as tests — a
 test directory, or files next to the code that match a naming pattern
@@ -41,6 +41,23 @@ unambiguously, stop with `STATUS: REFUSED`.
 
 **Test files only.** Nothing else — not a stub, not a new module or package
 file, not a build or config file.
+
+## Behaviors, not rendering
+
+The test pins what the code **does**, never how it **looks**. Assert on the
+data or state the behavior produces — a returned value, a status code, a
+redirect, a stored record, a field's name, an element found by its role or
+test id — never on markup, styles, layout or fixed copy (a heading's
+wording, a button's label). Find an element by its role, a test id or a
+field's name rather than by an accessible name that is fixed copy; when
+the element has no other handle, the accessible name is allowed — say so
+in `NOTES`. Text is fair to assert when it is the behavior's content — a
+computed value, data the user entered — not when it is copy a designer
+could reword.
+
+The exception is a project whose `AGENTS.md` asks for rendering tests: the
+task message then names their scope (for example "the HTML of the
+e-mails"), and within that scope alone the test may pin the rendering.
 
 ## Starting point and working runs
 
@@ -136,6 +153,9 @@ Stop and report instead of acting when:
   missing-symbol error **is** the valid red;
 - the behavior you were given is ambiguous, or would need more than one test
   to specify: report the question or the proposed split instead of guessing;
+- the behavior can only be checked through its rendering, outside the
+  rendering tests scope the task message names (if any): it is design, not
+  a behavior;
 - someone asks you to write the implementation "to save time". It is not your
   step.
 

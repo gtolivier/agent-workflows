@@ -131,7 +131,7 @@ fi
 if [ "$remaining" -gt 0 ]; then
   next="Carry on with the next unchecked behavior."
 else
-  next="All behaviors are ticked: carry on with the pull request and its reviews."
+  next="All behaviors are ticked: resume step 6 of the feature skill where you left it (final refactor, UI commit, pull request, reviews)."
 fi
 checklist_json=$(json_escape "$checklist")
 printf '{"decision": "block", "reason": "%s is still running (%s). %s Before stopping on purpose, set the Status line of %s: \\"waiting-for-user — <reason>\\" to hand back, \\"waiting — <what>\\" to wait for background work; if the feature was abandoned, delete that file. (Relaunch %s of %s without progress.)"}\n' \

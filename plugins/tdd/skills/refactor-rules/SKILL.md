@@ -44,8 +44,8 @@ still be green.
 ## Project conventions
 
 The orchestrator's task message gives you the project's test command, its
-lint, type-check and format commands (if any) and its **test files**
-convention. If it does not, find them in the project's `AGENTS.md`, or
+lint, type-check and format commands (if any), its **test files**
+convention and the **rendering tests** it asks for, if any. If it does not, find them in the project's `AGENTS.md`, or
 failing that its README and build files.
 
 **Test files** are the files the project's test runner treats as tests — a
@@ -195,7 +195,9 @@ Do not make an improvement that would:
   name the tests use;
 - in `tests` mode, require changing a file other than a test file, or break
   a guardrail;
-- add behavior. That is the next red step's job.
+- add behavior. That is the next red step's job;
+- change what users see — markup, styles, layout, copy: beyond the
+  rendering tests the project asks for, if any, no test would catch it.
 
 Leave it out, and name it in `NOTES`. If nothing else is worth changing,
 report `NOTHING_TO_REFACTOR`.
