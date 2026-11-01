@@ -67,10 +67,10 @@ list, its `UI:` line, the lines the pull request changes and whatever
 they break elsewhere. The triage fixes what falls inside it, opens a
 GitHub issue for what falls outside — linked to the review comment, and
 answered there — declines what does not hold, and asks you only when a
-finding's scope is unclear or it would change an existing test. Nothing is added to the pull request once your
-approval is requested: a later comment becomes an issue, and one that
-shows a defect in the pull request makes the skill ask you again before
-merging.
+finding's scope is unclear or it would change an existing test. Nothing
+is added to the pull request once your approval is requested: a later
+comment becomes an issue, and one that shows a defect in the pull request
+makes the skill ask you again before merging.
 
 **Baby steps.** Each behavior is the smallest observable increment, ordered
 from the simplest case to the most general (Zero, One, Many, Boundaries,
