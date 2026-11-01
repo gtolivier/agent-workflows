@@ -43,21 +43,34 @@ Run a feature with:
 /tdd:feature <what the feature should do>
 ```
 
-The skill creates a `feature/<slug>` branch, proposes a list of behaviors
-(one test each) and waits for your approval, then runs one cycle per
+The skill creates a `feature/<slug>` branch, reviews the open issues,
+proposes a list of behaviors (one test each) with the issues the feature
+settles and waits for your approval, then runs one cycle per
 behavior without interrupting you, with one commit per step (`red: …`,
 `green: …`, `refactor: …`, `refactor(tests): …` for the final tests
 pass, and `ui: …` for pure design) so that each step can be checked on its
 own.
 Once the feature is
 complete, it opens a pull request, lets CI and review bots run alongside an
-independent review, triages their comments and yours (fix, propose, or
-reply why not) — anyone else's are reported to you, not acted on — reruns
-the independent review on its fixes, and only then asks for your approval,
-listing the last fixes, which no independent review covered. Nothing is
-merged without it; the merge is a squash, one commit per feature. After
-the merge, it gives you a prompt to paste after `/clear` that starts the
-next step of the roadmap.
+independent review, triages their comments and yours — anyone else's are
+reported to you, not acted on — reruns the independent review on its
+fixes, and only then asks for your approval, listing the last fixes, which
+no independent review covered. Nothing is merged without it; the merge is
+a squash, one commit per feature, and its description closes the issues
+the feature settles (`Closes #n`). After the merge, it gives you a prompt
+to paste after `/clear` that starts the next step of the roadmap and lists
+the open issues to review first — in a workspace, those of the workspace
+repository and of every repository in it.
+
+**Scope of a review.** The pull request's scope is the approved behavior
+list, its `UI:` line, and the lines the pull request changes. The triage
+fixes what falls inside it, opens a GitHub issue for what falls outside —
+linked to the review comment, and answered there — declines what does not
+hold, and asks you only when a finding's scope is unclear or it would
+change an existing test. Nothing is added to the pull request once your
+approval is requested: a later comment becomes an issue, and one that
+shows a defect in the pull request makes the skill ask you again before
+merging.
 
 **Baby steps.** Each behavior is the smallest observable increment, ordered
 from the simplest case to the most general (Zero, One, Many, Boundaries,
