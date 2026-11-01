@@ -5,3 +5,10 @@
 id = "local-path"
 description = "Absolute path to a home folder"
 regex = '''(?:/Users/|/home/|(?i:[a-z]:\\{1,2}users\\{1,2}))[\p{L}\p{N}._-]+'''
+
+# Shared and service accounts name no one: Docker images (node), CI runners.
+[[rules.allowlists]]
+regexTarget = "match"
+regexes = [
+  '''^(?:/Users/|/home/)(?:Shared|Public|node|runner|ubuntu|vscode|circleci)$''',
+]

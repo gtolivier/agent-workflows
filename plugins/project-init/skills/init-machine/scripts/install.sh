@@ -29,6 +29,11 @@ if ! command -v gitleaks >/dev/null 2>&1; then
   fi
   brew install gitleaks
 fi
+# gitleaks 8.19 is the first version with the git and stdin commands.
+if ! gitleaks git --help >/dev/null 2>&1 || ! gitleaks stdin --help >/dev/null 2>&1; then
+  echo "install: gitleaks $(gitleaks version) is too old; update it (brew upgrade gitleaks)." >&2
+  exit 1
+fi
 
 mkdir -p "$target_dir"
 rm -f "$target_dir"/*.toml

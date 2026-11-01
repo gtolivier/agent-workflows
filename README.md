@@ -190,14 +190,23 @@ config, for every repository on the machine:
 |---|---|
 | `pre-commit` | the staged changes |
 | `commit-msg` | the commit message |
-| `pre-push` | the pushed commits the remote does not have yet, merges included, their messages and the pushed ref names |
+| `pre-push` | the pushed commits the remote does not have yet (asked to the remote when its remote-tracking refs cannot tell), merges included, their messages, the pushed ref names and annotated tag messages |
 
 - **Rules.** gitleaks' default rules (keys, tokens, passwords), plus one
   rule of its own: an absolute path to a home folder (`/Users/<name>`,
   `/home/<name>`, `C:\Users\<name>`), which leaks a user name and a
-  machine layout. A repository with its own `.github/gitleaks/*.toml` (or
-  `.gitleaks.toml`) uses those instead. A known and accepted finding goes
-  in `.gitleaksignore`, by the fingerprint the hook prints.
+  machine layout — shared and service accounts such as `/home/node` or
+  `/home/runner` excepted. A repository with its own
+  `.github/gitleaks/*.toml` (or `.gitleaks.toml`) uses those instead:
+  without `[extend] useDefault = true`, they replace gitleaks' default
+  rules too.
+- **Accepted findings.** A finding in a file goes in `.gitleaksignore`, by
+  the fingerprint the hook prints. One in a commit message has none: amend
+  the message.
+- **Limits.** Only git 2.54 or later runs these hooks: an older git, or a
+  tool with its own git implementation, skips them. Files with a NUL byte
+  are never scanned; other files marked binary in `.gitattributes` are
+  scanned at the push only.
 - **The repository's own hooks keep running.** They are config-based hooks
   (git 2.54 or later): git runs them first, then the repository's hook,
   from `.git/hooks` or from a local `core.hooksPath`. Nothing changes in

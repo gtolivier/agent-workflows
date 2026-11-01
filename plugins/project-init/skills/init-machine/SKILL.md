@@ -16,14 +16,20 @@ work; your part is to run them, read their output and report.
 |---|---|---|
 | `pre-commit` | the staged changes | a finding |
 | `commit-msg` | the commit message | a finding |
-| `pre-push` | the pushed commits the remote does not have yet, merges included, their messages, and the pushed ref names | a finding |
+| `pre-push` | the pushed commits the remote does not have yet, merges included, their messages, the pushed ref names and annotated tag messages | a finding, or a push it cannot scan |
 
 - Rules: the repository's `.github/gitleaks/*.toml` if it has some, else its
   `.gitleaks.toml`, else the global configs — gitleaks' default rules
-  (`secrets.toml`) and absolute paths to a home folder (`paths.toml`), each
-  in its own pass. Secrets are redacted in the output.
-- A known and accepted finding goes in `.gitleaksignore`, at the repository
-  root, by the fingerprint the hook prints.
+  (`secrets.toml`) and absolute paths to a home folder except shared and
+  service accounts (`paths.toml`), each in its own pass. A repository config
+  without `[extend] useDefault = true` drops gitleaks' default rules.
+  Secrets are redacted in the output.
+- A known and accepted finding in a file goes in `.gitleaksignore`, at the
+  repository root, by the fingerprint the hook prints. A finding in a
+  commit message has no fingerprint: the message must be amended.
+- Not covered: commits made by a git older than 2.54 or a tool with its own
+  git implementation, and files with a NUL byte. Files marked binary in
+  `.gitattributes` are scanned at the push only.
 - They are git config-based hooks (`hook.gitleaks-<event>` in the global
   git config, git 2.54 or later): git runs them, then the repository's own
   hook, from `.git/hooks` or a local `core.hooksPath`. Nothing to change in
@@ -39,8 +45,8 @@ work; your part is to run them, read their output and report.
 1. Run `scripts/install.sh` (relative to this skill's folder). It installs
    gitleaks with Homebrew if missing, copies the hook and configs to
    `~/.config/git/gitleaks/`, and sets the hooks in the global git config.
-   It replaces a previous install: run it again after an update of this
-   skill.
+   It refuses a git older than 2.54 or a gitleaks older than 8.19. It
+   replaces a previous install: run it again after an update of this skill.
 2. Check: in a repository, `git hook list --show-scope pre-commit` lists
    `global gitleaks-pre-commit`, followed by the repository's own hook if
    it has one.
