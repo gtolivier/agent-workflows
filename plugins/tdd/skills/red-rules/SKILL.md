@@ -48,7 +48,8 @@ The test pins what the code **does**, never how it **looks**. Assert on the
 data or state the behavior produces — a returned value, a status code, a
 redirect, a stored record, a field's name, an element found by its role or
 test id — never on markup, styles, layout or fixed copy (a heading's
-wording, a button's label). Text is fair to assert when it is the
+wording, a button's label), including through a lookup by accessible name
+when that name is fixed copy. Text is fair to assert when it is the
 behavior's content — a computed value, data the user entered — not when it
 is copy a designer could reword.
 

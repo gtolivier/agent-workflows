@@ -71,7 +71,9 @@ copy, outside the scope of the rendering tests the project asks for (step
 1). The red step's rules say what a test may assert. Pure design — a
 change to the look alone — is outside the cycles: write it on the
 checklist's `UI:` line, and it is made in one `ui:` commit after the last
-refactor (step 6). A large redesign is its own pull request.
+refactor (step 6). A change to rendering the project's rendering tests
+pin is a behavior, not pure design: it goes through a cycle. A large
+redesign is its own pull request.
 
 **Baby steps.** Each behavior is the smallest observable increment — one
 case, one example — that a handful of lines can make pass. Prefer several
@@ -145,8 +147,8 @@ Work through the unchecked behaviors in order, without stopping to report
 between cycles.
 
 **What each subagent is told.** Every delegation message includes the
-conventions from step 1 — the rendering tests among them — and nothing
-about the checklist — neither its content nor where it is. Beyond that, each step gets only what it needs:
+conventions from step 1, the rendering tests scope included, and nothing
+about the checklist: neither its content nor where it is. Beyond that, each step gets only what it needs:
 
 | Subagent | Told | Never told |
 |---|---|---|
@@ -322,21 +324,26 @@ Then, when the checklist's `UI:` line is not `none`, make the **UI
 commit**: the look alone — production files only, no test, no behavior.
 
 - **Before captures.** Capture what the `UI:` line changes, on the commit
-  the refactor left: with the capture tool the project's `AGENTS.md` names
-  (it may name a fallback, such as the Playwright CLI), into
-  `<git-dir>/tdd/<slug>/`, never committed. For a text interface — a
-  command's output, a generated report — the capture is the text itself.
-  If `AGENTS.md` names no capture tool or the app cannot be run, set
+  the refactor left, into `<git-dir>/tdd/<slug>/`, never committed. For a
+  text interface — a command's output, a generated report — the capture is
+  the text itself: run the command. For anything else, use the capture
+  tool the project's `AGENTS.md` names (it may name a fallback, such as
+  the Playwright CLI); if it names none or the app cannot be run, set
   `Status: waiting-for-user — captures` and ask the user for the captures,
-  or for the go-ahead without them.
+  or for the go-ahead without them. Then delete whatever running the app
+  or the capture tool left in the working tree: `git status --porcelain`
+  must print nothing, or `step.sh ui` would commit it.
 - **The change.** Make it yourself — the one production change you make
   directly — then run `bash <this skill's directory>/scripts/step.sh ui
   "<what changed>"`. It checks that no test file changed and that the full
   suite, the linter and the type checker (if any) are clean, commits `ui:
   <what changed>` and prints the commit's size. The test counts must be
   the same as before. If a check fails, fix your change and run it again;
-  if the change turns out to need a behavior, stop (step 5) and propose it.
-- **After captures**, the same ones on the `ui:` commit.
+  if the change turns out to need a behavior, discard it (`git restore`
+  and `git clean` on its paths), then stop (step 5) and propose the
+  behavior.
+- **After captures**, the same ones on the `ui:` commit, leaving the
+  working tree clean again.
 
 A feature with nothing to look at — no page, no output — has no pure
 design: its `UI:` line is `none`.
@@ -345,8 +352,8 @@ Then:
 
 1. **Check before publishing.** Pushing publishes the branch, on a public
    repository to everyone. Read `git diff <default-branch>...HEAD`, the
-   text captures of the UI commit (the PR description holds them) and the
-   branch's commit messages (`git log <default-branch>..HEAD`) for
+   text captures of the UI commit (the PR description will hold them) and
+   the branch's commit messages (`git log <default-branch>..HEAD`) for
    secrets, credentials, personal data, internal URLs and **local
    details** — paths on the user's machine, local tool or interpreter
    versions, the content or location of the user's private configuration
