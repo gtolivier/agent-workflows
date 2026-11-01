@@ -61,12 +61,13 @@ kebab-case name for the feature.
 ## 3. Behaviors — the one checkpoint before the end
 
 Read the relevant code, tests and any specification or reference the user
-pointed to, and the **open issues**: `gh issue list --state open` in the
-repository and, in a workspace, in the workspace repository — the folder
-above, when it is a repository with a GitHub remote (`gh issue list -R
-<owner>/<repo>`). An issue the feature settles goes on the checklist's
-`Closes:` line; one it touches without settling is named to the user with
-the list. Split the feature into **behaviors**: each one observable, each
+pointed to, and the **open issues**: `gh issue list --state open --limit
+1000` in the repository and, in a workspace, in each of the **workspace's
+repositories** — the folder above, when it is a repository, and every
+repository it holds, those with a GitHub remote (`-R <owner>/<repo>`). An
+issue the feature settles goes on the checklist's `Closes:` line; one it
+touches without settling is named to the user with the list. If the list
+changes later (step 5), update the `Closes:` line with it. Split the feature into **behaviors**: each one observable, each
 one specified by exactly one test, ordered so that each builds on what is
 already green (leaves before the code that uses them).
 
@@ -292,9 +293,10 @@ Hand back to the user — after setting `Status: waiting-for-user — <reason>`
   too big (the size signal of step 4). Do not change the approved list
   silently: propose the change.
 
-These conditions keep applying during the triage of step 6 — except that a
-review finding is never a reason to change the list there: its scope
-decides (step 6, item 4).
+These conditions keep applying during the triage of step 6, except for the
+last one: there, a review finding that touches the list is sorted by its
+scope (step 6, item 4) — a missing case of an approved behavior is added
+without asking, anything else is asked or becomes an issue.
 
 ## 6. Pull request and reviews
 
@@ -409,15 +411,17 @@ Then:
    attaches.
 
    Sort each finding by **scope** first. The pull request's scope is the
-   approved checklist — its behaviors and its `UI:` line — and the lines
-   the pull request changes. Decide it yourself, without asking:
+   approved checklist — its behaviors and its `UI:` line — the lines the
+   pull request changes, and whatever those changes break elsewhere (a
+   caller, another test). Decide it yourself, without asking:
 
    - **In scope**: handle it in this pull request.
      - **An approved behavior implemented wrongly**, or a case its
        sentence already covers that no test pins: fix it through a new
        red/green/refactor cycle. A missing case is appended to the
-       checklist as a new behavior, so that `step.sh` ticks it, and the PR
-       description names it as added by the triage.
+       checklist as a new behavior, so that `step.sh` ticks it; the PR
+       description and the approval summary (step 7) name it as added by
+       the triage.
      - **A behavior-preserving change to production code** the pull
        request changes (clarity, duplication, a lint finding): delegate it
        to `refactor` in `code` mode, with the finding as its task, and
@@ -431,8 +435,8 @@ Then:
        changes: fix it yourself — with the UI commits, the only files you
        edit directly.
    - **Out of scope** — a behavior no approved sentence covers, a problem
-     in code, tests or documentation the pull request does not change:
-     never handle it in this pull request. Open an issue for it (below).
+     in code, tests or documentation the pull request neither changes nor
+     breaks: never handle it in this pull request. Open an issue for it (below).
    - **In doubt** — and for any change to an assertion, expected value or
      input of an existing test, which changes what the user approved: ask
      the user before step 7. Set `Status: waiting-for-user — scope of
@@ -444,16 +448,18 @@ Then:
      it, and say why in the reply.
 
    **Open an issue** with `gh issue create`, in the pull request's
-   repository — or in the workspace's repository the finding is about.
-   First search the open issues (`gh issue list --search <keywords>`): if
-   one already covers the finding, comment on it with a link to the
-   finding instead. The title is the finding, short and in the
+   repository — or in the workspace's repository (step 3) the finding is
+   about, passing `-R <owner>/<repo>` to every `gh` command below. First
+   search that repository's open issues (`gh issue list --search
+   <keywords>`): if one already covers the finding, comment on it with a
+   link to the finding instead. The title is the finding, short and in the
    imperative. The body starts with "**Claude (triage)**", gives the
-   finding reworded with no local detail (item 1) and why it is outside
-   this pull request's scope, links the review comment (its `html_url`)
-   and ends with "From the review of #<number>". Label it `bug` or
-   `enhancement` if the repository has that label (`gh label list`); never
-   create a label.
+   finding reworded with no local detail (item 1) and why this pull
+   request does not handle it — out of its scope, or arrived after
+   approval was requested (step 8, item 1) — links the review comment (its
+   `html_url`) and ends with "From the review of <owner>/<repo>#<number>".
+   Label it `bug` or `enhancement` if the repository has that label (`gh
+   label list --limit 1000`); never create a label.
 
    Then:
 
@@ -503,25 +509,29 @@ conversation, or by the user merging the PR themselves.
 **Nothing is added to the pull request once approval is requested.** A
 finding that arrives later becomes an issue (step 8, item 1), and so does
 a change the user asks for then, unless they insist on having it in this
-pull request — then step 6 runs again from the start on it, and approval
-is asked again.
+pull request — then it is implemented as in step 4, step 6 runs again
+from the start on the same pull request (item 2 updates its description
+instead of opening it, and item 5 calls for a new review), and approval is
+asked again.
 
 ## 8. After approval
 
 1. **Look for late comments.** Review comments that arrived since the
-   approval request are triaged as in step 6, item 4 — who counts, and
-   scope — before merging, but none changes the pull request: each one
-   that holds becomes an issue, and every comment gets a reply. One in
-   scope — a defect in what the pull request changes — is reported to the
-   user with its issue, and the merge waits for a new go-ahead, even if
-   one was given before it arrived.
+   approval request are triaged before merging — who counts and scope, as
+   in step 6, item 4 — but none changes the pull request, whatever its
+   scope: each one that holds becomes an issue, and every comment gets a
+   reply. One in scope or in doubt — a defect in what the pull request
+   changes or breaks — is reported to the user with its issue, and the
+   merge waits for a new go-ahead, even if one was given before it
+   arrived.
 2. **Merge.** Squash-merge the PR unless the user already merged it (one
    commit per feature on the default branch), only with CI (if any) green on
    its latest commit, and delete the branch.
 3. **Check the result.** Switch back to the default branch, pull, and check
    that CI (if any) is green on it. If it is not, stop and report. Check
-   that every issue of the `Closes:` line is closed; close any that is not
-   with `gh issue close <n> --comment "Closed by #<number>"` (with `-R
+   that every issue the merged pull request's description still closes
+   (its `Closes` lines) is closed; close any that is not with `gh issue
+   close <n> --comment "Closed by <owner>/<repo>#<number>"` (with `-R
    <owner>/<repo>` for another repository's).
 4. Delete `<git-dir>/tdd/<slug>.md`, and if they exist
    `<git-dir>/tdd/<slug>.ralph` (the Stop hook's counter),
@@ -540,10 +550,10 @@ is asked again.
      says whether it is the workspace's or the repository's — failing
      that, the repository's `ROADMAP.md` or the plan the user gave;
    - the open issues, to review before starting — number, title and
-     repository, from `gh issue list --state open` in the repository and,
-     in a workspace, in the workspace repository and every repository it
-     holds that has a GitHub remote; an issue for a defect of the merged
-     pull request (item 1) comes first;
+     repository, from `gh issue list --state open --limit 1000` in the
+     repository and, in a workspace, in each of the workspace's
+     repositories (step 3); an issue for a defect of the merged pull
+     request (item 1) comes first;
    - what to read first;
    - the skill to run, if any;
    - the decisions still open;

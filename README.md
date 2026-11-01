@@ -63,8 +63,8 @@ the open issues to review first — in a workspace, those of the workspace
 repository and of every repository in it.
 
 **Scope of a review.** The pull request's scope is the approved behavior
-list, its `UI:` line, and the lines the pull request changes. The triage
-fixes what falls inside it, opens a GitHub issue for what falls outside —
+list, its `UI:` line, the lines the pull request changes and whatever
+they break elsewhere. The triage fixes what falls inside it, opens a GitHub issue for what falls outside —
 linked to the review comment, and answered there — declines what does not
 hold, and asks you only when a finding's scope is unclear or it would
 change an existing test. Nothing is added to the pull request once your
