@@ -71,9 +71,9 @@ copy, outside the scope of the rendering tests the project asks for (step
 1). The red step's rules say what a test may assert. Pure design — a
 change to the look alone — is outside the cycles: write it on the
 checklist's `UI:` line, and it is made in one `ui:` commit after the last
-refactor (step 6). A change to rendering the project's rendering tests
-pin is a behavior, not pure design: it goes through a cycle. A large
-redesign is its own pull request.
+refactor (step 6). A change to the rendering that the project's
+rendering tests pin is a behavior, not pure design: it goes through a
+cycle. A large redesign is its own pull request.
 
 **Baby steps.** Each behavior is the smallest observable increment — one
 case, one example — that a handful of lines can make pass. Prefer several
@@ -98,7 +98,7 @@ Type-check command: <command, or "none">
 Test files: <convention>
 Test pathspecs: <the same convention, as Git pathspecs>
 Rendering tests: <the scope the project's AGENTS.md asks for, or "none">
-UI: <the pure design changes to make after the cycles, or "none">
+UI: <the pure design changes to make after the cycles, and for a text interface the command that shows it, or "none">
 
 - [ ] <first behavior>
 - [ ] <second behavior>
@@ -326,22 +326,25 @@ commit**: the look alone — production files only, no test, no behavior.
 - **Before captures.** Capture what the `UI:` line changes, on the commit
   the refactor left, into `<git-dir>/tdd/<slug>/`, never committed. For a
   text interface — a command's output, a generated report — the capture is
-  the text itself: run the command. For anything else, use the capture
-  tool the project's `AGENTS.md` names (it may name a fallback, such as
-  the Playwright CLI); if it names none or the app cannot be run, set
+  the text itself: run the command the `UI:` line names, which the user
+  approved with it. For anything else, use the capture tool the project's
+  `AGENTS.md` names (it may name a fallback, such as the Playwright CLI).
+  If there is no such command or tool, or the app cannot be run, set
   `Status: waiting-for-user — captures` and ask the user for the captures,
-  or for the go-ahead without them. Then delete whatever running the app
-  or the capture tool left in the working tree: `git status --porcelain`
-  must print nothing, or `step.sh ui` would commit it.
+  or for the go-ahead without them. Then undo whatever running the app or
+  the capture tool left in the working tree — `git restore` what it
+  changed, `git clean` what it added: `git status --porcelain` must print
+  nothing, or `step.sh ui` would commit it.
 - **The change.** Make it yourself — the one production change you make
   directly — then run `bash <this skill's directory>/scripts/step.sh ui
   "<what changed>"`. It checks that no test file changed and that the full
   suite, the linter and the type checker (if any) are clean, commits `ui:
   <what changed>` and prints the commit's size. The test counts must be
   the same as before. If a check fails, fix your change and run it again;
-  if the change turns out to need a behavior, discard it (`git restore`
-  and `git clean` on its paths), then stop (step 5) and propose the
-  behavior.
+  if the change turns out to need a behavior, discard every uncommitted
+  change (`git restore .` and `git clean -fd`, until `git status
+  --porcelain` prints nothing), then stop (step 5) and propose the
+  behavior, moved from the `UI:` line to the list.
 - **After captures**, the same ones on the `ui:` commit, leaving the
   working tree clean again.
 
@@ -403,8 +406,9 @@ Then:
    - **New behavior, or a change to existing tests**: do not implement it.
      Propose it to the user in step 7, as a change to the approved list.
    - **Rendering** — the look of what the feature shows: styles, layout,
-     fixed copy: fix it yourself in a new `ui:` commit, with its before and
-     after captures, as for the UI commit above.
+     fixed copy, outside the rendering tests scope: fix it yourself in a
+     new `ui:` commit, with its before and after captures, as for the UI
+     commit above. Inside that scope, it is a new behavior.
    - **Documentation, configuration, PR description**: fix it yourself —
      with the UI commits, the only files you edit directly.
    - Push the fixes, then reply on the PR to every comment: the commit that

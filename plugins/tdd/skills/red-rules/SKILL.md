@@ -48,10 +48,12 @@ The test pins what the code **does**, never how it **looks**. Assert on the
 data or state the behavior produces — a returned value, a status code, a
 redirect, a stored record, a field's name, an element found by its role or
 test id — never on markup, styles, layout or fixed copy (a heading's
-wording, a button's label), including through a lookup by accessible name
-when that name is fixed copy. Text is fair to assert when it is the
-behavior's content — a computed value, data the user entered — not when it
-is copy a designer could reword.
+wording, a button's label). Find an element by its role, a test id or a
+field's name rather than by an accessible name that is fixed copy; when
+the element has no other handle, the accessible name is allowed — say so
+in `NOTES`. Text is fair to assert when it is the behavior's content — a
+computed value, data the user entered — not when it is copy a designer
+could reword.
 
 The exception is a project whose `AGENTS.md` asks for rendering tests: the
 task message then names their scope (for example "the HTML of the

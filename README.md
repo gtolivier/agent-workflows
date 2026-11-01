@@ -73,10 +73,13 @@ assertion on markup, styles, layout or fixed copy, unless the project's
 scope it names. Pure design stays outside the cycles: the behavior list
 names it on a `UI:` line, and the orchestrator makes it in one `ui: …`
 commit after the last refactor, checked by `step.sh ui` (no test file
-changed, every check clean). It takes before and after captures with the
-capture tool the project's `AGENTS.md` names; screenshots stay in the Git
-directory and are shown to you at approval, never published, while text
-captures (a command's output) go in the PR description.
+changed, every check clean). A change to rendering the project's tests
+pin is a behavior, and goes through a cycle. The UI commit has before and
+after captures: for a text interface, the output of a command the `UI:`
+line names; otherwise screenshots from the capture tool the project's
+`AGENTS.md` names. Screenshots stay in the Git directory and are shown to
+you at approval, never published; text captures go in the PR
+description.
 
 **Clean code.** The refactor step checks each cycle's code against explicit
 criteria: no magic numbers or strings, intention-revealing names, small

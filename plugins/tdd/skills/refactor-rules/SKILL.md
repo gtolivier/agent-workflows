@@ -44,8 +44,8 @@ still be green.
 ## Project conventions
 
 The orchestrator's task message gives you the project's test command, its
-lint, type-check and format commands (if any) and its **test files**
-convention. If it does not, find them in the project's `AGENTS.md`, or
+lint, type-check and format commands (if any), its **test files**
+convention and the **rendering tests** it asks for, if any. If it does not, find them in the project's `AGENTS.md`, or
 failing that its README and build files.
 
 **Test files** are the files the project's test runner treats as tests — a
