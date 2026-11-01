@@ -92,7 +92,10 @@ pass without progress (a newly ticked behavior or a new commit). It looks
 at the repository the session's current directory is in, so the skill
 `cd`s into it when the session started in the folder above. From such a
 folder, the hook never relaunches: it cannot tell which session runs a
-feature found there, and only reports the running features. It lets the
+feature found there, and only reports the running features. That folder
+may be a repository itself — a workspace repository that ignores the ones
+below it: the hook then relaunches that repository's own feature, and only
+reports those below. It lets the
 session stop whenever the skill waits for you or for CI and reviews. The
 hook only reads the checklist — it never runs a command — and does nothing
 outside a running `/tdd:feature`.

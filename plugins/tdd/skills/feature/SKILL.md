@@ -21,9 +21,10 @@ turn (see step 3), and resume when it reports.
 ## 1. Preconditions and conventions
 
 Work from inside the repository: if the session started in a folder above
-it, `cd` into it first and stay there. In Claude Code, the Stop hook keeps
-the feature going only while the session's directory is inside its
-repository.
+it, `cd` into it first and stay there — even when that folder is itself a
+repository (a workspace repository that ignores the ones below it). In
+Claude Code, the Stop hook keeps the feature going only while the session's
+directory is inside the feature's repository.
 
 Establish the project's conventions from its `AGENTS.md`, or failing that its
 README and build files:
@@ -117,8 +118,8 @@ you resume. In Claude Code, the plugin's Stop hook enforces it (the Ralph
 loop): while the status is `running`, it blocks the stop and relaunches you,
 until three relaunches pass without progress (a newly ticked behavior or a
 new commit) — then it sets `Status: waiting-for-user` itself and lets the
-session stop. From a folder above the repository, it never relaunches you
-(see step 1). If the user abandons the feature, delete the checklist: while
+session stop. From a folder above the feature's repository, even a
+repository itself, it never relaunches you (see step 1). If the user abandons the feature, delete the checklist: while
 it says `running`, the hook keeps the loop alive.
 
 ## 4. One cycle per behavior

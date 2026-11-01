@@ -10,7 +10,10 @@
 # hook input's cwd, which follows the session's cd). From a folder above
 # several repositories, it never blocks: it cannot tell which session runs
 # a feature found there, and would relaunch one session for another's
-# feature. It only reports the running features then.
+# feature. It only reports the running features then. That folder may be a
+# repository itself (a workspace repository that ignores the ones below
+# it): its own running feature is relaunched as usual, and those of the
+# repositories below it are only reported.
 #
 # The hook only reads the checklist: it never runs the project's tests, so
 # no command written into the checklist escapes Claude Code's permissions.
@@ -31,38 +34,53 @@ session_dir=$(printf '%s' "$input" |
 
 json_escape() { printf '%s' "$1" | sed -e 's/\\/\\\\/g' -e 's/"/\\"/g'; }
 
-# Repositories to look at: the one the session is in, or, when the session
-# is in a folder holding several repositories, each of them.
+# scan <repositories, one per line>: sets running to the last one with a
+# running feature, and found to the list of those features.
+scan() {
+  running=""
+  found=""
+  while IFS= read -r repo; do
+    [ -n "$repo" ] || continue
+    branch=$(git -C "$repo" branch --show-current 2>/dev/null)
+    case "$branch" in feature/*) ;; *) continue ;; esac
+    git_dir=$(git -C "$repo" rev-parse --absolute-git-dir 2>/dev/null) || continue
+    slug=${branch#feature/}
+    checklist="$git_dir/tdd/$slug.md"
+    state="$git_dir/tdd/$slug.ralph"
+    [ -f "$checklist" ] || continue
+    if grep -q '^Status: running' "$checklist"; then
+      running=$repo
+      found="$found, $branch in $repo"
+    else
+      rm -f "$state" # a pause or a hand-back ends the idle streak
+    fi
+  done <<EOF
+$1
+EOF
+}
+
+# child_repos <folder> [<its own repository>]: the repositories of the
+# folder's direct subfolders, other than the folder's own repository.
+child_repos() {
+  for d in "$1"/*/; do
+    t=$(git -C "$d" rev-parse --show-toplevel 2>/dev/null) || continue
+    [ "$t" = "${2:-}" ] || printf '%s\n' "$t"
+  done | sort -u
+}
+
+# Look at the repository the session is in; when it has no running feature,
+# or when the session is in no repository, at the repositories below.
+parent=no
 if top=$(git -C "$session_dir" rev-parse --show-toplevel 2>/dev/null); then
-  repos=$top
-  parent=no
+  scan "$top"
+  if [ -z "$running" ]; then
+    scan "$(child_repos "$top" "$top")"
+    parent=yes
+  fi
 else
-  repos=$(for d in "$session_dir"/*/; do
-    git -C "$d" rev-parse --show-toplevel 2>/dev/null
-  done | sort -u)
+  scan "$(child_repos "$session_dir")"
   parent=yes
 fi
-
-running=""
-found=""
-while IFS= read -r repo; do
-  [ -n "$repo" ] || continue
-  branch=$(git -C "$repo" branch --show-current 2>/dev/null)
-  case "$branch" in feature/*) ;; *) continue ;; esac
-  git_dir=$(git -C "$repo" rev-parse --absolute-git-dir 2>/dev/null) || continue
-  slug=${branch#feature/}
-  checklist="$git_dir/tdd/$slug.md"
-  state="$git_dir/tdd/$slug.ralph"
-  [ -f "$checklist" ] || continue
-  if grep -q '^Status: running' "$checklist"; then
-    running=$repo
-    found="$found, $branch in $repo"
-  else
-    rm -f "$state" # a pause or a hand-back ends the idle streak
-  fi
-done <<EOF
-$repos
-EOF
 
 [ -n "$running" ] || exit 0
 
