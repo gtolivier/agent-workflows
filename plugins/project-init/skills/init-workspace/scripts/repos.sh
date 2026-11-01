@@ -11,9 +11,14 @@ here=$(cd "$(dirname "$0")" && pwd)
 [ $# -eq 1 ] || { echo "usage: $0 <workspace-dir>" >&2; exit 2; }
 cd "$1"
 [ -f AGENTS.md ] || { echo "repos: no AGENTS.md in $1" >&2; exit 1; }
-grep -q '^<!-- project-init:repositories' AGENTS.md || {
+if ! grep -q '^<!-- project-init:repositories' AGENTS.md; then
   echo "repos: AGENTS.md has no project-init:repositories markers: list left as is." >&2
   exit 0
+fi
+# Without the end marker, the rewrite would drop the rest of the file.
+grep -q '^<!-- /project-init:repositories -->' AGENTS.md || {
+  echo "repos: AGENTS.md lacks the end marker <!-- /project-init:repositories -->: put it back after the list" >&2
+  exit 1
 }
 
 cell() { printf '%s' "$1" | tr '\n' ' ' | sed 's/|/\\|/g'; }
@@ -30,7 +35,10 @@ for child in */; do
   [ -e "$child/.git" ] || continue
   count=$((count + 1))
   stack='—' description='—'
-  hosted=$(git -C "$child" remote get-url origin 2>/dev/null || echo 'this machine only')
+  # The remote without its credentials, if its URL holds some.
+  hosted=$(git -C "$child" remote get-url origin 2>/dev/null |
+    sed -E 's#^([A-Za-z][A-Za-z0-9+.-]*://)[^/@]*@#\1#' || true)
+  [ -n "$hosted" ] || hosted='this machine only'
   if [ -f "$child/.project-init.yml" ]; then
     r=$(uv run --quiet --script "$here/register.py" "$child/.project-init.yml")
     stack=$(printf '%s' "$r" | jq -r '.stack // "—"')
@@ -38,7 +46,8 @@ for child in */; do
     repo=$(printf '%s' "$r" | jq -r '.host.repo // empty')
     [ -z "$repo" ] || hosted="[$repo](https://github.com/$repo)"
   fi
-  printf '| [`%s`](%s/) | %s | %s | %s |\n' "$child" "$child" \
+  # <…> keeps a link with spaces whole.
+  printf '| [`%s`](<%s/>) | %s | %s | %s |\n' "$child" "$child" \
     "$(cell "$stack")" "$(cell "$hosted")" "$(cell "$description")" >>"$table"
 done
 [ "$count" -gt 0 ] || printf 'None yet: create one with the init-repo skill.\n' >"$table"

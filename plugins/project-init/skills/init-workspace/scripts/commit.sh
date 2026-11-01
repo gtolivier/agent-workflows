@@ -2,7 +2,8 @@
 # Commit a workspace's own files, directly on its branch: refreshes the list
 # of repositories in AGENTS.md first, and refuses while a TODO(project-init)
 # placeholder remains, or when the commit would take in a repository of the
-# workspace or .claude/settings.local.json.
+# workspace or .claude/settings.local.json, or when the .gitignore is not an
+# allowlist.
 #
 # Usage: commit.sh <workspace-dir> [--message <text>]
 set -eu
@@ -26,8 +27,10 @@ if [ -z "$message" ]; then
   message="chore: set up the workspace with project-init $version"
 fi
 
-sh "$here/repos.sh" "$dir"
 cd "$dir"
+grep -qx '/\*' .gitignore 2>/dev/null ||
+  die ".gitignore is not an allowlist (no \"/*\" line): the repositories would be committed into the workspace"
+sh "$here/repos.sh" "$dir"
 git add --all
 staged=$(git diff --cached --name-only)
 left=$(printf '%s\n' "$staged" | while IFS= read -r f; do

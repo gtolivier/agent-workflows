@@ -85,8 +85,17 @@ ruleset_json() { # <checks as a JSON array>
 # The functions below run in an "|| status=1" context, where set -e does not
 # apply: each step that can fail returns explicitly.
 
+# owner/repo of a GitHub remote URL (https or ssh), lowercase; empty for
+# another host.
+github_repo_of() {
+  printf '%s' "$1" | tr '[:upper:]' '[:lower:]' | sed -nE \
+    's#^(https://([^/@]*@)?github\.com/|ssh://git@github\.com/|git@github\.com:)([^/]+/[^/]+)/?$#\3#p' |
+    sed 's#\.git$##'
+}
+
 # Create the GitHub repository if missing, then push the current branch.
-create_and_push() { # <dir> <owner/repo> <public|private> <description>
+# An origin that already points to it, over https or ssh, is kept.
+create_and_push() { # <dir> <owner/repo> <public|private> <description> <remote>
   if gh repo view "$2" --json name >/dev/null 2>&1; then
     echo "  $2 exists"
   else
@@ -96,13 +105,16 @@ create_and_push() { # <dir> <owner/repo> <public|private> <description>
       run gh repo create "$2" "--$3" || return 1
     fi
   fi
-  url=https://github.com/$2.git
-  if [ "$(git -C "$1" remote get-url origin 2>/dev/null || true)" != "$url" ]; then
-    if git -C "$1" remote get-url origin >/dev/null 2>&1; then
-      run git -C "$1" remote set-url origin "$url" || return 1
-    else
-      run git -C "$1" remote add origin "$url" || return 1
+  want=$(printf '%s' "$2" | tr '[:upper:]' '[:lower:]')
+  if origin=$(git -C "$1" remote get-url origin 2>/dev/null); then
+    if [ "$(github_repo_of "$origin")" != "$want" ]; then
+      echo "  origin is $origin, not $2: point it to $2, or fix host.repo in .project-init.yml" >&2
+      return 1
     fi
+  else
+    url=$5
+    [ "$(github_repo_of "$url")" = "$want" ] || url=https://github.com/$2.git
+    run git -C "$1" remote add origin "$url" || return 1
   fi
   if git -C "$1" rev-parse --verify --quiet HEAD >/dev/null; then
     run git -C "$1" push --quiet --set-upstream origin HEAD
@@ -115,7 +127,8 @@ create_and_push() { # <dir> <owner/repo> <public|private> <description>
 setup_repo() { # <dir> <register as JSON>
   repo=$(printf '%s' "$2" | jq -r .host.repo)
   visibility=$(printf '%s' "$2" | jq -r .choices.visibility)
-  create_and_push "$1" "$repo" "$visibility" "$(printf '%s' "$2" | jq -r '.description // ""')" || return 1
+  create_and_push "$1" "$repo" "$visibility" "$(printf '%s' "$2" | jq -r '.description // ""')" \
+    "$(printf '%s' "$2" | jq -r '.host.remote // ""')" || return 1
 
   case $(printf '%s' "$2" | jq -r '.host."squash-body" // "commit-messages"') in
     blank) squash_body=BLANK ;;
@@ -129,13 +142,20 @@ setup_repo() { # <dir> <register as JSON>
     --jq '"  merge settings: squash only, branch deleted after merge, squash title = PR title, body = \(.squash_merge_commit_message)"' || return 1
 
   body=$(ruleset_json "$(printf '%s' "$2" | jq -c '.host."required-checks" // []')")
-  existing=''
-  [ "$dry" = true ] || existing=$(gh api "repos/$repo/rulesets" \
-    --jq ".[] | select(.name == \"$RULESET_NAME\") | .id") || return 1
-  if [ -n "$existing" ]; then
-    api_json PUT "repos/$repo/rulesets/$existing" '"  ruleset updated: \(.name) (id \(.id))"' || ruleset_failed "$visibility"
+  # Reading the rulesets is refused too without GitHub Pro on a private
+  # repository. A dry run reads them when it can: the repository may not
+  # exist yet.
+  if existing=$(gh api "repos/$repo/rulesets" \
+    --jq ".[] | select(.name == \"$RULESET_NAME\") | .id" 2>/dev/null); then
+    if [ -n "$existing" ]; then
+      api_json PUT "repos/$repo/rulesets/$existing" '"  ruleset updated: \(.name) (id \(.id))"' || ruleset_failed "$visibility"
+    else
+      api_json POST "repos/$repo/rulesets" '"  ruleset created: \(.name) (id \(.id))"' || ruleset_failed "$visibility"
+    fi
+  elif [ "$dry" = true ]; then
+    api_json POST "repos/$repo/rulesets" ''
   else
-    api_json POST "repos/$repo/rulesets" '"  ruleset created: \(.name) (id \(.id))"' || ruleset_failed "$visibility"
+    ruleset_failed "$visibility"
   fi
 
   if [ "$visibility" = public ]; then
@@ -172,7 +192,8 @@ for dir; do
   case $(printf '%s' "$register" | jq -r .kind) in
     workspace)
       # Private, direct commits on main: no merge settings, no ruleset.
-      create_and_push "$dir" "$(printf '%s' "$register" | jq -r .host.repo)" private "" || status=1
+      create_and_push "$dir" "$(printf '%s' "$register" | jq -r .host.repo)" private "" \
+        "$(printf '%s' "$register" | jq -r '.host.remote // ""')" || status=1
       ;;
     repo) setup_repo "$dir" "$register" || status=1 ;;
   esac

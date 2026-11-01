@@ -196,7 +196,8 @@ roadmap is shared, and the register, while each repository keeps its own
 history. It works on a new folder or on one that already holds
 repositories. `.claude/settings.local.json` — never committed — denies
 the commands that read or change credentials and, on GitHub, makes git
-authenticate with `gh`: add your own `GH_TOKEN` under `"env"`.
+authenticate with `gh`: add your own `GH_TOKEN` under `"env"`, for the
+Claude Code sessions started at the workspace's root.
 
 **`init-repo <stack>`: a new repository.** The stack's generator writes
 the project (`python`: `uv init --lib`, with pytest, ruff and strict

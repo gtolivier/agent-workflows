@@ -38,7 +38,8 @@ An existing file is kept, never overwritten. A folder that already has a
      and issues are always in English.
    - **What else to version here,** in an existing folder: list what is
      neither a repository nor a file above (`ls -A`), and ask which ones
-     to track, such as `_Documents/`.
+     to track, such as `_Documents/`: files or folders at the top of the
+     workspace only.
 2. Run `scripts/init-workspace.sh <dir> --host <github|other|none>`
    (relative to this skill's folder), with `--owner`, `--repo`,
    `--remote`, `--roadmap`, `--pr-lang`, `--roadmap-lang` (codes such as
@@ -50,10 +51,11 @@ An existing file is kept, never overwritten. A folder that already has a
 4. Run `scripts/commit.sh <dir>`. It refreshes the list of repositories,
    then commits on `main`. It refuses while a placeholder remains, or when
    the commit would take in a repository or
-   `.claude/settings.local.json`; fix the cause, never the check.
+   `.claude/settings.local.json`, or the `.gitignore` is not an
+   allowlist; fix the cause, never the check.
 5. On GitHub: the init-github skill creates the private repository and
-   pushes. For git and `gh` to work from Claude Code sessions in this
-   workspace, the user adds their own token to
+   pushes. For git and `gh` to work from Claude Code sessions started at
+   the workspace's root, the user adds their own token to
    `.claude/settings.local.json`, under `"env"`, as `"GH_TOKEN"`. Tell
    them; never ask for the token, never read or print that file's values.
 6. Report what was created or kept, the commit, and the next step:

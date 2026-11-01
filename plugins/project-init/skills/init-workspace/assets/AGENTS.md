@@ -35,7 +35,9 @@ they are useful: it is temporary, and no decision lives there.
 ## Language
 
 Code, comments, documentation, commit messages and issues in English; pull
-requests and their comments in @PR_LANG@; the roadmap in @ROADMAP_LANG@.
+requests and their comments in @PR_LANG@; the roadmap in @ROADMAP_LANG@. A
+public repository keeps English throughout, unless its `AGENTS.md` says
+otherwise: its own `AGENTS.md` rules.
 
 ## Workflow
 

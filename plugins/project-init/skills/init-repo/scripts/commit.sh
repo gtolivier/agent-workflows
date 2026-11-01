@@ -24,6 +24,7 @@ if [ "${1-}" = --message ]; then message=${2-}; fi
 register=$(uv run --quiet --script "$here/register.py" "$dir/.project-init.yml")
 [ "$(printf '%s' "$register" | jq -r .kind)" = repo ] || die "$dir is not a repository set up by init-repo"
 stack=$(printf '%s' "$register" | jq -r .stack)
+RUNTIME=$(printf '%s' "$register" | jq -r .choices.runtime)
 version=$(printf '%s' "$register" | jq -r '."project-init"')
 [ -n "$message" ] || message="chore: set up the repository with project-init $version"
 

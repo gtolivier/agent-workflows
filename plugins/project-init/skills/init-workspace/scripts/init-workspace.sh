@@ -71,7 +71,15 @@ while [ $# -gt 0 ]; do
     --roadmap) roadmap=$2 ;;
     --pr-lang) pr_lang=$2 ;;
     --roadmap-lang) roadmap_lang=$2 ;;
-    --track) tracked="$tracked $(printf '%s' "$2" | sed 's|^\./||; s|^/||')" ;;
+    --track)
+      # One path per line: a path may hold spaces.
+      path=$(printf '%s' "$2" | sed 's|^\./||; s|^/||')
+      case ${path%/} in
+        '' | */* | *[][*?\\]* | '#'* | '!'* | ' '* | *' ' | *"
+"*) die "--track '$2': a file or folder at the top of the workspace, without '*?[]\\', a leading '#' or '!', or spaces around it" ;;
+      esac
+      tracked="$tracked$path
+" ;;
     *) usage ;;
   esac
   shift 2
@@ -87,16 +95,27 @@ dir=$(cd "$dir" && pwd)
 name=$(basename "$dir")
 [ ! -f "$dir/.project-init.yml" ] ||
   die "$dir already has a .project-init.yml: it is set up (upgrade is for later versions)"
-for path in $tracked; do
+while IFS= read -r path; do
+  [ -n "$path" ] || continue
   [ -e "$dir/$path" ] || die "--track $path: no such file or folder in $dir"
   [ ! -e "$dir/${path%/}/.git" ] || die "--track $path: a repository keeps its own history; it is listed, not tracked"
-done
+done <<EOF
+$tracked
+EOF
+# The workspace's .gitignore must be an allowlist: its "/*" ignores
+# everything, the repositories included, and "!/<path>" lines let in its own
+# files. An existing one without it would let the repositories in.
+if [ -f "$dir/.gitignore" ] && ! grep -qx '/\*' "$dir/.gitignore"; then
+  die "$dir/.gitignore is not an allowlist (no \"/*\" line): move it aside, or merge it into $skill/assets/gitignore, then run again"
+fi
 
 if [ "$host" = github ]; then
   if [ -z "$owner" ]; then
     owner=$(gh api user --jq .login 2>/dev/null) || die "--owner is required (gh is not logged in)"
   fi
   [ -n "$repo" ] || repo=$owner/$name
+  printf '%s' "$repo" | grep -Eq '^[A-Za-z0-9-]+/[A-Za-z0-9._-]+$' ||
+    die "'$repo' is not a GitHub repository name (owner/name: letters, digits, '.', '_', '-')"
   [ -n "$remote" ] || remote=https://github.com/$repo.git
 fi
 
@@ -108,7 +127,7 @@ echo "Workspace $dir:"
   cat "$skill/assets/gitignore"
   if [ -n "$tracked" ]; then
     echo "# Also tracked here (--track):"
-    for path in $tracked; do echo "!/$path"; done
+    printf '%s' "$tracked" | while IFS= read -r path; do echo "!/$path"; done
   fi
   echo "# Never: macOS folder metadata, in the tracked folders too."
   echo ".DS_Store"
@@ -136,14 +155,15 @@ if [ "$host" = github ]; then
 else
   jq 'del(.env)' "$skill/assets/settings.local.json" | create .claude/settings.local.json
 fi
+# The user adds a token to it: readable by them only.
+chmod 600 .claude/settings.local.json
 
 if [ -n "$remote" ] && ! git remote get-url origin >/dev/null 2>&1; then
   git remote add origin "$remote"
 fi
 
 version=$(jq -r .version "$skill/../../.claude-plugin/plugin.json" 2>/dev/null || echo unknown)
-# shellcheck disable=SC2086 # word splitting wanted: one path per word
-tracked_list=$(printf '%s\n' $tracked | jq -R 'select(. != "")' | jq -sc .)
+tracked_list=$(printf '%s' "$tracked" | jq -R 'select(. != "")' | jq -sc .)
 {
   echo "# project-init register: the version that set this workspace up and the"
   echo "# choices made. Read by project-init's scripts; record deviations from the"
@@ -151,11 +171,11 @@ tracked_list=$(printf '%s\n' $tracked | jq -R 'select(. != "")' | jq -sc .)
   echo "project-init: $(q "$version")"
   echo "kind: workspace"
   echo "choices:"
-  echo "  roadmap: $roadmap"
-  echo "  language: {prs: $pr_lang, roadmap: $roadmap_lang}"
+  echo "  roadmap: $(q "$roadmap")"
+  echo "  language: {prs: $(q "$pr_lang"), roadmap: $(q "$roadmap_lang")}"
   echo "  tracked: $tracked_list"
   echo "host:"
-  echo "  kind: $host"
+  echo "  kind: $(q "$host")"
   echo "  owner: $(q "$owner")"
   echo "  repo: $(q "$repo")"
   echo "  remote: $(q "$remote")"
@@ -167,4 +187,5 @@ sh "$here/repos.sh" "$dir"
 
 echo
 echo "Placeholders to fill before commit.sh:"
-grep -n 'TODO(project-init)' AGENTS.md DECISIONS.md 2>/dev/null | sed 's/^/  /' || echo "  none"
+left=$(grep -n 'TODO(project-init)' AGENTS.md DECISIONS.md 2>/dev/null || true)
+if [ -n "$left" ]; then printf '%s\n' "$left" | sed 's/^/  /'; else echo "  none"; fi

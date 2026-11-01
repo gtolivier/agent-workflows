@@ -34,9 +34,11 @@ Each stack lives in `stacks/<stack>/`: `stack.sh` and its templates.
 ## Steps
 
 1. Ask the user, in one message — never choose for them:
-   - **Name** (the folder) and a **one-line description**.
-   - **License:** an SPDX id (`MIT`, `Apache-2.0`, `AGPL-3.0`…) or `none`.
-     Ask for every repository: there is no default.
+   - **Name** (the folder: letters, digits, `.`, `_`, `-`) and a
+     **one-line description** (no `"` or `\`).
+   - **License:** an SPDX id (`MIT`, `Apache-2.0`, `AGPL-3.0-or-later`…)
+     or `none`. Ask for every repository: there is no default. For the GPL
+     family, ask whether it is `-only` or `-or-later`.
    - **Where it lives:** `github`, `other` (another host: ask the remote
      URL) or `none` (this machine only); then **public or private**.
    - **Oldest supported runtime version** (python: default 3.12).

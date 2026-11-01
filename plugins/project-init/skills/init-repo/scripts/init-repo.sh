@@ -76,8 +76,20 @@ done
 stack_dir=$skill/stacks/$stack
 [ -f "$stack_dir/stack.sh" ] ||
   die "unknown stack '$stack' (known: $(ls "$skill/stacks" | tr '\n' ' '))"
+. "$stack_dir/stack.sh"
+
+name=$(basename -- "$dir")
+printf '%s' "$name" | grep -Eq '^[A-Za-z0-9._][A-Za-z0-9._-]*$' ||
+  die "'$name': a repository name takes only letters, digits, '.', '_' and '-', not '-' first"
+stack_valid_name "$name" || die "'$name' is not a valid $stack project name: $STACK_NAME_RULE"
 [ -n "$description" ] || die "--description is required: one line, for the README, the package and GitHub"
+case $description in
+  *[\"\\]* | *"
+"*) die "--description: one line, without '\"' or '\\'" ;;
+esac
 [ -n "$license" ] || die "--license is required: ask the user (an SPDX id such as MIT, or none)"
+[ "$license" = none ] || printf '%s' "$license" | grep -Eq '^[A-Za-z0-9.+-]+$' ||
+  die "--license '$license': an SPDX id such as MIT, or none"
 case $host in
   github | other) [ "$visibility" = public ] || [ "$visibility" = private ] ||
     die "--visibility public|private is required with --host $host" ;;
@@ -93,7 +105,6 @@ done
 if [ -e "$dir" ] && [ -n "$(ls -A "$dir")" ]; then
   die "$dir is not empty: init-repo starts a new repository"
 fi
-name=$(basename "$dir")
 
 # The workspace above, if any: its choices are the defaults.
 parent=$(cd "$(dirname "$dir")" 2>/dev/null && pwd) || parent=''
@@ -113,12 +124,26 @@ fi
 [ -n "$pr_lang" ] || pr_lang=en
 [ -n "$roadmap_lang" ] || roadmap_lang=en
 
-# The license text, from GitHub's public API (no login needed).
+# The license text, from GitHub's public API (no login needed). GitHub
+# names the GPL family by ids SPDX has deprecated (GPL-3.0): the SPDX id
+# says -only or -or-later, and the build tools require it.
 if [ "$license" != none ]; then
-  key=$(printf '%s' "$license" | tr '[:upper:]' '[:lower:]')
+  suffix=''
+  case $license in
+    *-only) suffix=-only ;;
+    *-or-later) suffix=-or-later ;;
+  esac
+  key=$(printf '%s' "${license%"$suffix"}" | tr '[:upper:]' '[:lower:]')
   license_json=$(curl -fsSL "https://api.github.com/licenses/$key") ||
     die "unknown license '$license' (see https://api.github.com/licenses)"
   license=$(printf '%s' "$license_json" | jq -r .spdx_id)
+  case $license in
+    *GPL-* | GFDL-*)
+      [ -n "$suffix" ] ||
+        die "--license $license: ask the user whether it is $license-only or $license-or-later" ;;
+    *) [ -z "$suffix" ] || die "--license: $license takes no $suffix" ;;
+  esac
+  license=$license$suffix
   holder=$(git config user.name) || die "git config user.name is not set: the license needs a copyright holder"
 fi
 
@@ -132,11 +157,24 @@ else
   github_repo=''
 fi
 
-# Every check passed: create the folder only now.
+# Every check passed: create the folder only now. If a later step fails,
+# remove what this script made, so that it can run again.
+existed=false
+[ ! -e "$dir" ] || existed=true
 mkdir -p "$dir"
 dir=$(cd "$dir" && pwd)
+cleanup() {
+  [ "$1" -ne 0 ] || return 0
+  cd /
+  if [ "$existed" = true ]; then
+    find "$dir" -mindepth 1 -maxdepth 1 -exec rm -rf {} +
+  else
+    rm -rf "$dir"
+  fi
+  echo "init-repo: failed; $dir is back as it was" >&2
+}
+trap 'cleanup $?' EXIT
 
-. "$stack_dir/stack.sh"
 [ -n "$runtime" ] || runtime=$RUNTIME_DEFAULT
 
 export NAME="$name" DESCRIPTION="$description" RUNTIME="$runtime" \
@@ -152,16 +190,26 @@ managed='.project-init.yml AGENTS.md .gitignore'
 
 # .gitignore: the generator's, else GitHub's template for the stack.
 if [ ! -f .gitignore ]; then
-  curl -fsSL "https://api.github.com/gitignore/templates/$GITIGNORE_TEMPLATE" |
-    jq -r .source >.gitignore
+  template=$(curl -fsSL "https://api.github.com/gitignore/templates/$GITIGNORE_TEMPLATE") ||
+    die "could not download GitHub's $GITIGNORE_TEMPLATE .gitignore template"
+  printf '%s' "$template" | jq -er .source >.gitignore
 fi
 grep -qxF .DS_Store .gitignore || printf '\n# macOS\n.DS_Store\n' >>.gitignore
 
 if [ "$license" != none ]; then
   printf '%s' "$license_json" | jq -r .body |
-    YEAR=$(date +%Y) HOLDER=$holder awk '{
-      gsub(/\[year\]/, ENVIRON["YEAR"]); gsub(/\[fullname\]/, ENVIRON["HOLDER"]); print
-    }' >LICENSE
+    YEAR=$(date +%Y) HOLDER=$holder awk '
+      # Literal replacement: gsub would expand a "&" in the name.
+      function replace(s, from, to,   i, out) {
+        out = ""
+        while ((i = index(s, from)) > 0) {
+          out = out substr(s, 1, i - 1) to
+          s = substr(s, i + length(from))
+        }
+        return out s
+      }
+      { print replace(replace($0, "[year]", ENVIRON["YEAR"]), "[fullname]", ENVIRON["HOLDER"]) }
+    ' >LICENSE
   managed="$managed LICENSE"
 fi
 
@@ -202,14 +250,14 @@ checks='[]'
   echo "stack: $(q "$stack")"
   echo "description: $(q "$description")"
   echo "choices:"
-  echo "  visibility: $visibility"
+  echo "  visibility: $(q "$visibility")"
   echo "  license: $(q "$license")"
   echo "  runtime: $(q "$runtime")"
-  echo "  language: {prs: $pr_lang, roadmap: $roadmap_lang}"
-  echo "  roadmap: $roadmap_place"
+  echo "  language: {prs: $(q "$pr_lang"), roadmap: $(q "$roadmap_lang")}"
+  echo "  roadmap: $(q "$roadmap_place")"
   echo "  coderabbit: $coderabbit"
   echo "host:"
-  echo "  kind: $host"
+  echo "  kind: $(q "$host")"
   echo "  repo: $(q "$github_repo")"
   echo "  remote: $(q "$remote")"
   echo "  required-checks: $checks"
