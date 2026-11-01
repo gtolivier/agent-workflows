@@ -9,6 +9,11 @@
       "name": "tdd",
       "source": "./plugins/tdd",
       "description": "Test-driven development as a red/green/refactor loop: one subagent per step, orchestrated feature by feature on its own branch."
+    },
+    {
+      "name": "project-init",
+      "source": "./plugins/project-init",
+      "description": "Set up a machine, a workspace and its repositories with a common layer: git hooks that block secrets, GitHub settings, and more to come."
     }
   ]
 }

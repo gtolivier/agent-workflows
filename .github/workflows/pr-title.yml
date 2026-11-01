@@ -33,3 +33,4 @@ jobs:
           # One scope per plugin; repository-level changes take none.
           scopes: |
             tdd
+            project-init

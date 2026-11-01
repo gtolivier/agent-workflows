@@ -8,6 +8,7 @@ Reusable workflows for AI coding agents, packaged as
 ```sh
 claude plugin marketplace add gtolivier/agent-workflows
 claude plugin install tdd@agent-workflows
+claude plugin install project-init@agent-workflows
 ```
 
 To update, refresh the marketplace, then the plugin, and restart Claude
@@ -16,6 +17,7 @@ Code:
 ```sh
 claude plugin marketplace update agent-workflows
 claude plugin update tdd@agent-workflows
+claude plugin update project-init@agent-workflows
 ```
 
 Each plugin is released on its own, with a `<plugin>-v<version>` tag, a
@@ -175,6 +177,46 @@ signature does not accept yet, or an exception the code under test raises
 because the behavior is missing. A behavior about types alone — what a
 signature accepts or rejects — can be red in the type checker only, with a
 passing test.
+
+### `project-init` — a common layer for a machine and its repositories
+
+**`init-machine`: no secret leaves the machine through git.** Ask Claude
+Code to set up the machine (or run the skill's `scripts/install.sh`
+yourself): it installs [gitleaks](https://github.com/gitleaks/gitleaks)
+with Homebrew if missing, and adds three git hooks to your global git
+config, for every repository on the machine:
+
+| Hook | Scans |
+|---|---|
+| `pre-commit` | the staged changes |
+| `commit-msg` | the commit message |
+| `pre-push` | the pushed commits the remote does not have yet, merges included, their messages and the pushed ref names |
+
+- **Rules.** gitleaks' default rules (keys, tokens, passwords), plus one
+  rule of its own: an absolute path to a home folder (`/Users/<name>`,
+  `/home/<name>`, `C:\Users\<name>`), which leaks a user name and a
+  machine layout. A repository with its own `.github/gitleaks/*.toml` (or
+  `.gitleaks.toml`) uses those instead. A known and accepted finding goes
+  in `.gitleaksignore`, by the fingerprint the hook prints.
+- **The repository's own hooks keep running.** They are config-based hooks
+  (git 2.54 or later): git runs them first, then the repository's hook,
+  from `.git/hooks` or from a local `core.hooksPath`. Nothing changes in
+  the repository.
+- **Opting out.** One repository, one hook:
+  `git config hook.gitleaks-<event>.enabled false`; one command:
+  `--no-verify`.
+- **Updating.** Run `install.sh` again after a plugin update: it replaces
+  the hook and its configs in `~/.config/git/gitleaks/`.
+
+**GitHub push protection** stops a secret that got past the hooks, at the
+push, on GitHub's side. The skill's `scripts/enable-push-protection.sh
+<owner/repo>...` turns it on, with secret scanning; run it with your own
+`gh` login in a normal terminal, since a Claude Code session's token cannot
+change repository settings. It is free on public repositories. A private
+repository needs GitHub Secret Protection, sold to organizations only: on a
+personal account, the local hooks are its only protection. "Push
+protection for yourself", in your GitHub settings (Code security), covers
+your pushes to every public repository.
 
 ## Portability
 
