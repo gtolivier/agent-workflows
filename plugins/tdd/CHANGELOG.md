@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.10.1](https://github.com/gtolivier/agent-workflows/compare/tdd-v0.10.0...tdd-v0.10.1) (2026-11-01)
+
+
+### Bug Fixes
+
+* **tdd:** report child-repository features from a workspace repository ([#21](https://github.com/gtolivier/agent-workflows/issues/21)) ([b3427ba](https://github.com/gtolivier/agent-workflows/commit/b3427bab74b814ab00b86ab8b20f85f7e1905649))
+
 ## [0.10.0](https://github.com/gtolivier/agent-workflows/compare/tdd-v0.9.0...tdd-v0.10.0) (2026-10-25)
 
 
