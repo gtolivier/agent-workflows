@@ -8,7 +8,8 @@ description: Develop one feature test-first on its own branch — agree on a lis
 The feature to build is the user's request. You are the **orchestrator**: you
 never write tests or implementation yourself. You delegate each step to its
 subagent (`red`, `green`, `refactor` — in Claude Code, `tdd:red`, `tdd:green`,
-`tdd:refactor`), check what it did, and keep the history.
+`tdd:refactor`), check what it did, and keep the history. The one exception
+is pure design, after the cycles: the UI commit of step 6.
 
 When delegating, **never override the subagent's model**: each definition
 picks the model suited to its step. Run each subagent **in the foreground**
@@ -39,7 +40,11 @@ README and build files:
   suite runs in several configurations, in one of them, without a coverage
   report: whatever makes a run on a few files fast. Try it once on an
   existing test file: it must run that file's tests, and only them;
-  otherwise leave it out.
+  otherwise leave it out;
+- the **rendering tests** the project asks for: only an explicit statement
+  of `AGENTS.md` that tests may pin rendering — markup, styles, layout,
+  exact copy — and its scope ("the HTML of the e-mails"). Without one, the
+  answer is none: tests pin behaviors only.
 
 Stop and tell the user if any of these fails:
 
@@ -59,6 +64,14 @@ Read the relevant code, tests and any specification or reference the user
 pointed to. Split the feature into **behaviors**: each one observable, each
 one specified by exactly one test, ordered so that each builds on what is
 already green (leaves before the code that uses them).
+
+**Behaviors, not rendering.** A behavior is what the code does, never how
+it looks: no behavior about markup, styles, layout or the wording of fixed
+copy, outside the scope of the rendering tests the project asks for (step
+1). The red step's rules say what a test may assert. Pure design — a
+change to the look alone — is outside the cycles: write it on the
+checklist's `UI:` line, and it is made in one `ui:` commit after the last
+refactor (step 6). A large redesign is its own pull request.
 
 **Baby steps.** Each behavior is the smallest observable increment — one
 case, one example — that a handful of lines can make pass. Prefer several
@@ -82,6 +95,8 @@ Lint command: <command, or "none">
 Type-check command: <command, or "none">
 Test files: <convention>
 Test pathspecs: <the same convention, as Git pathspecs>
+Rendering tests: <the scope the project's AGENTS.md asks for, or "none">
+UI: <the pure design changes to make after the cycles, or "none">
 
 - [ ] <first behavior>
 - [ ] <second behavior>
@@ -94,7 +109,9 @@ separated by spaces, that match exactly the test files — `tests/`,
 test, lint and type-check commands of the checklist: the user approves them
 with the list. The focused test command is for the subagents' working runs
 (step 4); `step.sh` never runs it — every commit is checked against the
-full suite.
+full suite. The user approves the `Rendering tests` and `UI` lines with the
+list too; the `UI:` line is no checkbox, so that ticking the behaviors
+never reaches it.
 
 The checklist is working state: inside the Git directory it is never
 committed, and it stays out of the subagents' way — they must not learn the
@@ -128,8 +145,8 @@ Work through the unchecked behaviors in order, without stopping to report
 between cycles.
 
 **What each subagent is told.** Every delegation message includes the
-conventions from step 1, and nothing about the checklist — neither its
-content nor where it is. Beyond that, each step gets only what it needs:
+conventions from step 1 — the rendering tests among them — and nothing
+about the checklist — neither its content nor where it is. Beyond that, each step gets only what it needs:
 
 | Subagent | Told | Never told |
 |---|---|---|
@@ -301,10 +318,34 @@ the tests pass checks a settled production code:
   the pass is rerun once with a reminder of its guardrails, as for a
   write-zone violation (step 4).
 
+Then, when the checklist's `UI:` line is not `none`, make the **UI
+commit**: the look alone — production files only, no test, no behavior.
+
+- **Before captures.** Capture what the `UI:` line changes, on the commit
+  the refactor left: with the capture tool the project's `AGENTS.md` names
+  (it may name a fallback, such as the Playwright CLI), into
+  `<git-dir>/tdd/<slug>/`, never committed. For a text interface — a
+  command's output, a generated report — the capture is the text itself.
+  If `AGENTS.md` names no capture tool or the app cannot be run, set
+  `Status: waiting-for-user — captures` and ask the user for the captures,
+  or for the go-ahead without them.
+- **The change.** Make it yourself — the one production change you make
+  directly — then run `bash <this skill's directory>/scripts/step.sh ui
+  "<what changed>"`. It checks that no test file changed and that the full
+  suite, the linter and the type checker (if any) are clean, commits `ui:
+  <what changed>` and prints the commit's size. The test counts must be
+  the same as before. If a check fails, fix your change and run it again;
+  if the change turns out to need a behavior, stop (step 5) and propose it.
+- **After captures**, the same ones on the `ui:` commit.
+
+A feature with nothing to look at — no page, no output — has no pure
+design: its `UI:` line is `none`.
+
 Then:
 
 1. **Check before publishing.** Pushing publishes the branch, on a public
-   repository to everyone. Read `git diff <default-branch>...HEAD` and the
+   repository to everyone. Read `git diff <default-branch>...HEAD`, the
+   text captures of the UI commit (the PR description holds them) and the
    branch's commit messages (`git log <default-branch>..HEAD`) for
    secrets, credentials, personal data, internal URLs and **local
    details** — paths on the user's machine, local tool or interpreter
@@ -314,7 +355,9 @@ Then:
    comments, replies) must contain no such detail either.
 2. **Open the pull request.** Push the branch and open a PR titled after the
    feature. Its description holds the checklist, all ticked, and anything
-   notable: `ALREADY_GREEN` tests, refusals, restored violations.
+   notable: `ALREADY_GREEN` tests, refusals, restored violations. With a UI
+   commit, it lists what was captured, and holds the text captures as
+   before/after code blocks; screenshots stay local (step 7).
 3. **Collect the reviews.**
    - CI runs on the PR. If it fails, stop and report — do not try to fix
      it: a failure the local suite did not show needs the user's eyes.
@@ -352,8 +395,11 @@ Then:
      step 4.
    - **New behavior, or a change to existing tests**: do not implement it.
      Propose it to the user in step 7, as a change to the approved list.
+   - **Rendering** — the look of what the feature shows: styles, layout,
+     fixed copy: fix it yourself in a new `ui:` commit, with its before and
+     after captures, as for the UI commit above.
    - **Documentation, configuration, PR description**: fix it yourself —
-     the only files you edit directly.
+     with the UI commits, the only files you edit directly.
    - Push the fixes, then reply on the PR to every comment: the commit that
      fixes it, the proposal it became, or why it is not applied. Comments
      and replies may be posted under the user's account, so start each
@@ -390,8 +436,11 @@ commit. Then set `Status: waiting-for-user — approval requested` and ask the
 user's approval with the PR link, the CI status, and a summary of the
 triage: what was fixed, which of those fixes no independent review covered
 (step 6, item 5), what became a proposal, what was declined and why, which
-reviews are still missing. **Do not merge before an explicit go-ahead** —
-given in the conversation, or by the user merging the PR themselves.
+reviews are still missing. With a UI commit, show the user its before and
+after screenshots from `<git-dir>/tdd/<slug>/`: they are never published,
+and the user may attach them to the PR. **Do not merge before an explicit
+go-ahead** — given in the conversation, or by the user merging the PR
+themselves.
 
 A proposal the user approves is implemented as in step 4, then step 6 runs
 again from the start on the same pull request: item 2 updates its
@@ -410,8 +459,9 @@ Approval is then asked again.
 3. **Check the result.** Switch back to the default branch, pull, and check
    that CI (if any) is green on it. If it is not, stop and report.
 4. Delete `<git-dir>/tdd/<slug>.md`, and if they exist
-   `<git-dir>/tdd/<slug>.ralph` (the Stop hook's counter) and
-   `<git-dir>/tdd/<slug>.log` (`step.sh`'s output).
+   `<git-dir>/tdd/<slug>.ralph` (the Stop hook's counter),
+   `<git-dir>/tdd/<slug>.log` (`step.sh`'s output) and
+   `<git-dir>/tdd/<slug>/` (the UI captures).
 5. **Hand over the next step.** Once the default branch is green — and
    after any follow-up the project's `AGENTS.md` requires after a merge,
    such as merging a release pull request — give the user a prompt to

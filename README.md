@@ -46,8 +46,9 @@ Run a feature with:
 The skill creates a `feature/<slug>` branch, proposes a list of behaviors
 (one test each) and waits for your approval, then runs one cycle per
 behavior without interrupting you, with one commit per step (`red: …`,
-`green: …`, `refactor: …`, and `refactor(tests): …` for the final tests
-pass) so that each step can be checked on its own.
+`green: …`, `refactor: …`, `refactor(tests): …` for the final tests
+pass, and `ui: …` for pure design) so that each step can be checked on its
+own.
 Once the feature is
 complete, it opens a pull request, lets CI and review bots run alongside an
 independent review, triages their comments and yours (fix, propose, or
@@ -64,6 +65,18 @@ Interfaces, Exceptions). The green step may fake the first example with a
 hard-coded value; the next example forces the generalization. When a green
 step still needs a lot of code, the skill proposes to split the remaining
 behaviors.
+
+**Behaviors, not rendering.** Tests pin what the code does — the data,
+state, status or element a behavior produces — never how it looks: no
+assertion on markup, styles, layout or fixed copy, unless the project's
+`AGENTS.md` explicitly asks for rendering tests, and then only within the
+scope it names. Pure design stays outside the cycles: the behavior list
+names it on a `UI:` line, and the orchestrator makes it in one `ui: …`
+commit after the last refactor, checked by `step.sh ui` (no test file
+changed, every check clean). It takes before and after captures with the
+capture tool the project's `AGENTS.md` names; screenshots stay in the Git
+directory and are shown to you at approval, never published, while text
+captures (a command's output) go in the PR description.
 
 **Clean code.** The refactor step checks each cycle's code against explicit
 criteria: no magic numbers or strings, intention-revealing names, small

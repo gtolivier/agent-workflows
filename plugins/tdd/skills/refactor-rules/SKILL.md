@@ -195,7 +195,9 @@ Do not make an improvement that would:
   name the tests use;
 - in `tests` mode, require changing a file other than a test file, or break
   a guardrail;
-- add behavior. That is the next red step's job.
+- add behavior. That is the next red step's job;
+- change what users see — markup, styles, layout, copy: the tests do not
+  pin the rendering, so nothing would catch it.
 
 Leave it out, and name it in `NOTES`. If nothing else is worth changing,
 report `NOTHING_TO_REFACTOR`.

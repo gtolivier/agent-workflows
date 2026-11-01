@@ -7,6 +7,8 @@
 #   step.sh green <behavior>          all clean; commits "green: …"
 #   step.sh refactor [<what changed>] all clean; commits "refactor: …" if
 #                                     anything changed, ticks
+#   step.sh ui <what changed>         all clean; commits "ui: …" (the look
+#                                     alone, after the last refactor)
 #   step.sh tests                     all clean, test files only; never
 #                                     commits (the diff needs reading first)
 #   step.sh check                     all clean on a clean working tree;
@@ -14,8 +16,8 @@
 #
 # The orchestrator runs it after each subagent's report, from the
 # repository, on its feature/<slug> branch. It checks the write zone first
-# (only test files for red, already-green and tests; none for green and
-# refactor; no change at all for check), then runs the test, lint and
+# (only test files for red, already-green and tests; none for green,
+# refactor and ui; no change at all for check), then runs the test, lint and
 # type-check commands of the checklist, and commits only when every check
 # passes. Ticking marks the
 # first unchecked behavior of the checklist.
@@ -47,8 +49,9 @@ step=${1:-}
 message=${2:-}
 case $step in
 red | already-green | green) [ -n "$message" ] || die "$step needs the behavior as its second argument" ;;
+ui) [ -n "$message" ] || die "ui needs what changed as its second argument" ;;
 refactor | tests | check) ;;
-*) die "usage: step.sh red|already-green|green|refactor|tests|check [<message>]" ;;
+*) die "usage: step.sh red|already-green|green|refactor|ui|tests|check [<message>]" ;;
 esac
 
 top=$(git rev-parse --show-toplevel 2>/dev/null) || die "not in a Git repository"
@@ -110,7 +113,7 @@ check_zone() {
   red | already-green | tests)
     [ -z "$code_changes" ] || refuse_zone "files outside the test files changed$*" "$code_changes"
     ;;
-  green | refactor)
+  green | refactor | ui)
     [ -z "$test_changes" ] || refuse_zone "test files changed$*" "$test_changes"
     ;;
   check)
@@ -124,7 +127,7 @@ fi
 check_zone
 case $step in
 red | already-green) [ -n "$test_changes" ] || refuse_zone "no test file changed" "(none)" ;;
-green) [ -n "$code_changes" ] || refuse_zone "no production file changed" "(none)" ;;
+green | ui) [ -n "$code_changes" ] || refuse_zone "no production file changed" "(none)" ;;
 esac
 
 tick() {
@@ -206,6 +209,7 @@ red)
 already-green) commit_message="red: $message (already green)" ;;
 green) commit_message="green: $message" ;;
 refactor) commit_message="refactor: $message" ;;
+ui) commit_message="ui: $message" ;;
 esac
 [ "$step" = red ] || [ "$clean" = yes ] || not_committed "a check failed"
 # A command that rewrites files (a formatter, a linter's fixes) must not
@@ -243,7 +247,7 @@ fi
 rm -f "$pending"
 echo "committed $(git rev-parse --short HEAD) $commit_message"
 case $step in
-green | refactor) git show --shortstat --format= HEAD | sed 's/^ */  /' ;;
+green | refactor | ui) git show --shortstat --format= HEAD | sed 's/^ */  /' ;;
 esac
 case $step in
 already-green | refactor) tick ;;
