@@ -1,3 +1,4 @@
 {
-  "plugins/tdd": "0.13.0"
+  "plugins/tdd": "0.13.0",
+  "plugins/project-init": "0.1.0"
 }

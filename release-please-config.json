@@ -13,6 +13,17 @@
           "jsonpath": "$.version"
         }
       ]
+    },
+    "plugins/project-init": {
+      "release-type": "simple",
+      "component": "project-init",
+      "extra-files": [
+        {
+          "type": "json",
+          "path": ".claude-plugin/plugin.json",
+          "jsonpath": "$.version"
+        }
+      ]
     }
   }
 }
