@@ -8,7 +8,7 @@ set -u
 
 event=$1
 arg=${2:-} # commit-msg: the message file; pre-push: the remote name or URL
-url=${3:-$arg} # pre-push: the URL pushed to (a push URL, if one is set)
+url=${3:-$arg} # pre-push: the URL pushed to
 
 if ! command -v gitleaks >/dev/null 2>&1; then
   echo "gitleaks-hook: gitleaks is not installed (brew install gitleaks)." >&2
@@ -64,7 +64,13 @@ remote_commits=
 remote_listed=
 list_remote_commits() {
   [ -n "$remote_listed" ] && return 0
-  listing=$(git ls-remote "$url" </dev/null) || return 1
+  # By name, the remote's own settings apply (uploadpack, proxy); with push
+  # URLs, git runs this hook once per URL: ask the one pushed to.
+  remote=$arg
+  if git config --get "remote.$arg.pushurl" >/dev/null 2>&1; then
+    remote=$url
+  fi
+  listing=$(git ls-remote "$remote" </dev/null) || return 1
   known=$(printf '%s\n' "$listing" |
     sed -n 's/^\([0-9a-f]*\)[[:space:]].*/\1^{commit}/p' |
     git cat-file --batch-check='%(objectname)' |
@@ -147,7 +153,8 @@ $remote_ref"
           scan_commits "$target" "$remote_sha" "$names" -- "$@" || status=1
           ;;
         blob)
-          { git cat-file -p "$target"; printf '%s\n' "$names"; } |
+          # The echo ends a blob's last line: the names must not join it.
+          { git cat-file -p "$target"; echo; printf '%s\n' "$names"; } |
             scan_stdin "$@" || status=1
           ;;
         *)
