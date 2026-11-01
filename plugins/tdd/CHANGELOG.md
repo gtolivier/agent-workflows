@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.13.0](https://github.com/gtolivier/agent-workflows/compare/tdd-v0.12.0...tdd-v0.13.0) (2026-11-01)
+
+
+### Features
+
+* **tdd:** turn out-of-scope review findings into issues ([#27](https://github.com/gtolivier/agent-workflows/issues/27)) ([076adb5](https://github.com/gtolivier/agent-workflows/commit/076adb509ce1a311b871b21127002263bfb1a9f6))
+
 ## [0.12.0](https://github.com/gtolivier/agent-workflows/compare/tdd-v0.11.0...tdd-v0.12.0) (2026-11-01)
 
 
