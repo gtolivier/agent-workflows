@@ -1,7 +1,7 @@
 {
   "$schema": "https://anthropic.com/claude-code/plugin.schema.json",
   "name": "project-init",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Set up a machine, a workspace and its repositories with a common layer: git hooks that block secrets, GitHub settings, and more to come.",
   "author": {
     "name": "Olivier Charvoz"
