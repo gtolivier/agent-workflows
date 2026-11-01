@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.12.0](https://github.com/gtolivier/agent-workflows/compare/tdd-v0.11.0...tdd-v0.12.0) (2026-11-01)
+
+
+### Features
+
+* **tdd:** pin behaviors, not rendering ([#25](https://github.com/gtolivier/agent-workflows/issues/25)) ([de8656c](https://github.com/gtolivier/agent-workflows/commit/de8656c76a18fa8a5c94faa8151f47e4b8340731))
+
 ## [0.11.0](https://github.com/gtolivier/agent-workflows/compare/tdd-v0.10.1...tdd-v0.11.0) (2026-11-01)
 
 
