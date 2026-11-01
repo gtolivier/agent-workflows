@@ -41,6 +41,14 @@ cp "$source_dir"/assets/*.toml "$target_dir"/
 cp "$source_dir"/scripts/gitleaks-hook.sh "$target_dir"/
 chmod +x "$target_dir"/gitleaks-hook.sh
 
+# The local-path rule has exceptions (rules.allowlists) older gitleaks
+# versions ignore: check that a shared account passes.
+if ! echo /home/node | gitleaks stdin --config "$target_dir/paths.toml" \
+  --no-banner --log-level error >/dev/null 2>&1; then
+  echo "install: gitleaks $(gitleaks version) ignores the local-path exceptions; update it (brew upgrade gitleaks)." >&2
+  exit 1
+fi
+
 for event in $events; do
   git config set --global --all "hook.gitleaks-$event.event" "$event"
   git config set --global --all "hook.gitleaks-$event.command" \

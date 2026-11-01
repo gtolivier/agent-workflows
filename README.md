@@ -190,7 +190,7 @@ config, for every repository on the machine:
 |---|---|
 | `pre-commit` | the staged changes |
 | `commit-msg` | the commit message |
-| `pre-push` | the pushed commits the remote does not have yet (asked to the remote when its remote-tracking refs cannot tell), merges included, their messages, the pushed ref names and annotated tag messages |
+| `pre-push` | the pushed commits the remote does not have yet (asked to the remote, at the push URL, when the pushed ref is new to it), merges included, their messages, the pushed ref names and annotated tag messages |
 
 - **Rules.** gitleaks' default rules (keys, tokens, passwords), plus one
   rule of its own: an absolute path to a home folder (`/Users/<name>`,

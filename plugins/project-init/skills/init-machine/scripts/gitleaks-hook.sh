@@ -8,6 +8,7 @@ set -u
 
 event=$1
 arg=${2:-} # commit-msg: the message file; pre-push: the remote name or URL
+url=${3:-$arg} # pre-push: the URL pushed to (a push URL, if one is set)
 
 if ! command -v gitleaks >/dev/null 2>&1; then
   echo "gitleaks-hook: gitleaks is not installed (brew install gitleaks)." >&2
@@ -63,11 +64,17 @@ remote_commits=
 remote_listed=
 list_remote_commits() {
   [ -n "$remote_listed" ] && return 0
-  listing=$(git ls-remote "$arg" </dev/null) || return 1
-  remote_commits=$(printf '%s\n' "$listing" |
+  listing=$(git ls-remote "$url" </dev/null) || return 1
+  known=$(printf '%s\n' "$listing" |
     sed -n 's/^\([0-9a-f]*\)[[:space:]].*/\1^{commit}/p' |
     git cat-file --batch-check='%(objectname)' |
-    grep -v ' missing$' | sort -u | paste -sd ' ' -)
+    grep -v ' missing$' | sort -u)
+  # Only the tips no other one contains: --log-opts stays one short argument.
+  if [ -n "$known" ]; then
+    # shellcheck disable=SC2086 # one SHA per word.
+    known=$(git merge-base --independent $known) || return 1
+  fi
+  remote_commits=$(printf '%s\n' "$known" | paste -sd ' ' -)
   remote_listed=1
 }
 
@@ -114,10 +121,9 @@ case $event in
     done
     ;;
   commit-msg)
-    # The message only: not the diff "git commit --verbose" appends below
-    # the scissors line, nor the comment lines git removes.
-    sed '/ -\{24\} >8 -\{24\}$/,$d' "$arg" | git stripspace --strip-comments |
-      scan_stdin "$@" || status=1
+    # The message, without the diff "git commit --verbose" appends below
+    # the scissors line. Comment lines stay: git keeps them in some modes.
+    sed '/ -\{24\} >8 -\{24\}$/,$d' "$arg" | scan_stdin "$@" || status=1
     ;;
   pre-push)
     # One line per pushed ref: <local ref> <local sha> <remote ref> <remote
@@ -141,7 +147,8 @@ $remote_ref"
           scan_commits "$target" "$remote_sha" "$names" -- "$@" || status=1
           ;;
         blob)
-          git cat-file -p "$target" | scan_stdin "$@" || status=1
+          { git cat-file -p "$target"; printf '%s\n' "$names"; } |
+            scan_stdin "$@" || status=1
           ;;
         *)
           echo "gitleaks-hook: cannot scan $local_ref ($local_sha)." >&2
