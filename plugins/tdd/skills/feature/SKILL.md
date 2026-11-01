@@ -412,3 +412,25 @@ Approval is then asked again.
 4. Delete `<git-dir>/tdd/<slug>.md`, and if they exist
    `<git-dir>/tdd/<slug>.ralph` (the Stop hook's counter) and
    `<git-dir>/tdd/<slug>.log` (`step.sh`'s output).
+5. **Hand over the next step.** Once the default branch is green — and
+   after any follow-up the project's `AGENTS.md` requires after a merge,
+   such as merging a release pull request — give the user a prompt to
+   paste in a fresh session (after `/clear`) to start the next step. It
+   must stand on its own: the new session knows nothing of this one. It
+   says:
+   - what was merged: the pull request's number and title, and the
+     follow-up's;
+   - the next step, from the roadmap the project's `AGENTS.md` points to
+     — in a workspace, the `AGENTS.md` of the folder above the repository
+     says whether it is the workspace's or the repository's — failing
+     that, the repository's `ROADMAP.md` or the plan the user gave;
+   - what to read first;
+   - the skill to run, if any;
+   - the decisions still open;
+   - the folder to start in.
+
+   If there is no next step, say so and suggest candidates instead:
+   postponed roadmap entries, open issues, follow-ups noted during this
+   feature. Write the prompt as one code block, in the language the user
+   asked for, failing that the conversation's. It stays in the
+   conversation and is never published, so it may name local paths.

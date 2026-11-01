@@ -54,7 +54,9 @@ independent review, triages their comments and yours (fix, propose, or
 reply why not) — anyone else's are reported to you, not acted on — reruns
 the independent review on its fixes, and only then asks for your approval,
 listing the last fixes, which no independent review covered. Nothing is
-merged without it; the merge is a squash, one commit per feature.
+merged without it; the merge is a squash, one commit per feature. After
+the merge, it gives you a prompt to paste after `/clear` that starts the
+next step of the roadmap.
 
 **Baby steps.** Each behavior is the smallest observable increment, ordered
 from the simplest case to the most general (Zero, One, Many, Boundaries,
