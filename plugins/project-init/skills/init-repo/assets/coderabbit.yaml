@@ -2,8 +2,8 @@
 # for public repositories allows about one review per hour, and fix-up pushes
 # must not use it up. Ask for another review with "@coderabbitai review".
 # Every feature that writes code is off: review comments go through triage
-# (fix through the TDD subagents, or reply why not), never straight onto
-# the branch.
+# (fixed by a commit of ours, or answered with why not), never straight
+# onto the branch.
 reviews:
   auto_review:
     enabled: true

@@ -15,9 +15,10 @@ Always go through `uv run`; do not rely on an activated virtualenv.
 
 ## Test-driven development
 
-Features are built with the `/tdd:feature` skill of the
-[`tdd` plugin](https://github.com/gtolivier/agent-workflows). Its conventions
-for this repository:
+The `/tdd:feature` skill of the
+[`tdd` plugin](https://github.com/gtolivier/agent-workflows) builds a
+feature test-first, one behavior at a time. Its conventions for this
+repository:
 
 - **Test, lint, type-check and format commands:** those of the Commands
   section above.

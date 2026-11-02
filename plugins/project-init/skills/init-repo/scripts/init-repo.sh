@@ -6,7 +6,7 @@
 # placeholders, then run commit.sh.
 #
 # Usage: init-repo.sh <stack> <dir> --description <text>
-#          --license <spdx-id|none> --host github|other|none
+#          --license <spdx-id|none> --host github|other|none --tdd on|off
 #          [--visibility public|private] [--owner <owner>] [--remote <url>]
 #          [--runtime <version>] [--pr-lang <code>] [--roadmap-lang <code>]
 #          [--no-coderabbit]
@@ -54,7 +54,7 @@ lang_name() {
 stack=$1 dir=$2
 shift 2
 license='' host='' visibility='' owner='' remote='' description=''
-runtime='' pr_lang='' roadmap_lang='' coderabbit=true
+runtime='' pr_lang='' roadmap_lang='' coderabbit=true tdd=''
 while [ $# -gt 0 ]; do
   case $1 in
     --license) license=${2-} ;;
@@ -66,6 +66,7 @@ while [ $# -gt 0 ]; do
     --runtime) runtime=${2-} ;;
     --pr-lang) pr_lang=${2-} ;;
     --roadmap-lang) roadmap_lang=${2-} ;;
+    --tdd) tdd=${2-} ;;
     --no-coderabbit) coderabbit=false; shift; continue ;;
     *) usage ;;
   esac
@@ -90,6 +91,10 @@ esac
 [ -n "$license" ] || die "--license is required: ask the user (an SPDX id such as MIT, or none)"
 [ "$license" = none ] || printf '%s' "$license" | grep -Eq '^[A-Za-z0-9.+-]+$' ||
   die "--license '$license': an SPDX id such as MIT, or none"
+case $tdd in
+  on | off) ;;
+  *) die "--tdd on|off is required: ask the user whether every behavior goes test-first now" ;;
+esac
 case $host in
   github | other) [ "$visibility" = public ] || [ "$visibility" = private ] ||
     die "--visibility public|private is required with --host $host" ;;
@@ -256,6 +261,7 @@ checks='[]'
   echo "  language: {prs: $(q "$pr_lang"), roadmap: $(q "$roadmap_lang")}"
   echo "  roadmap: $(q "$roadmap_place")"
   echo "  coderabbit: $coderabbit"
+  echo "  tdd: false"
   echo "host:"
   echo "  kind: $(q "$host")"
   echo "  repo: $(q "$github_repo")"
@@ -266,8 +272,9 @@ checks='[]'
   echo "managed: $(yaml_list $managed $(stack_managed))"
   echo "deviations: []"
 } >.project-init.yml
+[ "$tdd" = off ] || sh "$here/tdd.sh" on . >/dev/null
 
 echo
-echo "Created $dir ($stack, host $host, license $license)."
+echo "Created $dir ($stack, host $host, license $license, TDD $tdd)."
 echo "Placeholders to fill before commit.sh:"
 grep -rn --exclude-dir=.git --exclude-dir=.venv 'TODO(project-init)' . | sed 's/^\.\//  /' || true

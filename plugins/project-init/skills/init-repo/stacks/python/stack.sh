@@ -27,8 +27,8 @@ stack_generate() {
   uv add --quiet --group typecheck mypy
 
   package=$(printf '%s' "$NAME" | tr '[:upper:]-.' '[:lower:]__')
-  # uv's sample function is a behavior without a test: test-first starts
-  # from an empty package.
+  # uv's sample function is a behavior without a test: the package starts
+  # empty.
   : >"src/$package/__init__.py"
   mkdir -p tests
   PACKAGE=$package render "$STACK_DIR/test_package.py" >tests/test_package.py

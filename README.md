@@ -203,7 +203,9 @@ Claude Code sessions started at the workspace's root.
 the project (`python`: `uv init --lib`, with pytest, ruff and strict
 mypy), then the script adds the common layer: `.gitignore`, the `LICENSE`
 you choose for each project (or none), `README.md`, `ROADMAP.md`, and an
-`AGENTS.md` with the stack's commands and test-first rules. On GitHub, it
+`AGENTS.md` with the stack's commands and rules. Test-first development
+through `/tdd:feature` is your choice: required from the start, or turned
+on later with the skill's `tdd.sh`. On GitHub, it
 adds the CI — lint, type check, and tests on the oldest and newest
 supported versions — and, for a public repository, CodeRabbit. A
 repository can also live on another host or on this machine only. Its

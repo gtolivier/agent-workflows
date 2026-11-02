@@ -1,8 +1,9 @@
 #!/bin/sh
 # Rewrite the list of repositories in a workspace's AGENTS.md, between the
 # project-init:repositories markers: every folder of the workspace that is
-# a git repository, with its stack, host and description from its
-# .project-init.yml ("—" for a repository without one).
+# a git repository with a commit, with its stack, host and description from
+# its .project-init.yml ("—" for a repository without one). A repository
+# being set up joins the list with its first commit.
 #
 # Usage: repos.sh <workspace-dir>
 set -eu
@@ -33,6 +34,7 @@ count=0
 for child in */; do
   child=${child%/}
   [ -e "$child/.git" ] || continue
+  git -C "$child" rev-parse --verify --quiet HEAD >/dev/null || continue
   count=$((count + 1))
   stack='—' description='—'
   # The remote without its credentials, if its URL holds some.

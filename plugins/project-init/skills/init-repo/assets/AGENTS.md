@@ -8,8 +8,6 @@ Instructions for coding agents working in this repository. Read
 ## Rules
 
 @STACK_RULES@
-- **Test-first:** every behavior is introduced by a failing test (see
-  Test-driven development).
 - **Language:** @LANGUAGE_RULE@
 - **Common layer:** [project-init](https://github.com/gtolivier/agent-workflows)
   set this repository up. `.project-init.yml` records its version, the
