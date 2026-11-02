@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.6.0](https://github.com/gtolivier/agent-workflows/compare/project-init-v0.5.0...project-init-v0.6.0) (2026-11-02)
+
+
+### Features
+
+* **project-init:** add the hugo and hugo-theme stacks ([#48](https://github.com/gtolivier/agent-workflows/issues/48)) ([f2274c2](https://github.com/gtolivier/agent-workflows/commit/f2274c2029d358173571fc021c7a7a0000560d46))
+
 ## [0.5.0](https://github.com/gtolivier/agent-workflows/compare/project-init-v0.4.0...project-init-v0.5.0) (2026-11-02)
 
 
