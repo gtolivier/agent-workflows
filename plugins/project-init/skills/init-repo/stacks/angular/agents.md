@@ -20,7 +20,7 @@
 - `src/app/` — the application: one folder per feature, created with
   `ng generate`. Each `*.spec.ts` sits next to the file it tests.
 - `e2e/` — the Playwright tests of the assembled application, and the
-  accessibility test of every page.
+  accessibility tests (axe), one per page.
 - `public/` — static files, served as is.
 - No server-side rendering: `ng add @angular/ssr` adds it.
 

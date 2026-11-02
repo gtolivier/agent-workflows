@@ -1,0 +1,6 @@
+# The demo site imports the theme from this repository: Hugo resolves the
+# replacement from its themesDir (exampleSite/themes/), hence ../..
+[module]
+  replacements = '@MODULE@ -> ../..'
+  [[module.imports]]
+    path = '@MODULE@'

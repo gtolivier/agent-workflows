@@ -199,7 +199,7 @@ cleanup() {
 trap 'cleanup $?' EXIT
 
 export NAME="$name" DESCRIPTION="$description" RUNTIME="$runtime" \
-  LICENSE="$license" STACK_DIR="$stack_dir"
+  LICENSE="$license" STACK_DIR="$stack_dir" REMOTE="$remote"
 stack_render_env
 
 cd "$dir"
@@ -241,15 +241,24 @@ if [ "$roadmap_place" = repos ] && [ ! -f ROADMAP.md ]; then
   printf '# Roadmap\n' >ROADMAP.md
 fi
 
-STACK_SECTIONS=$(render "$stack_dir/agents.md")
-STACK_RULES=$(render "$stack_dir/rules.md")
+# A stack's template: in its folder, else in the folder of shared code it
+# names, SHARED_DIR.
+template() {
+  if [ -f "$stack_dir/$1" ] || [ -z "${SHARED_DIR-}" ]; then
+    echo "$stack_dir/$1"
+  else
+    echo "$SHARED_DIR/$1"
+  fi
+}
+STACK_SECTIONS=$(render "$(template agents.md)")
+STACK_RULES=$(render "$(template rules.md)")
 LANGUAGE_RULE="code, comments, documentation, commit messages and issues in English; pull requests and their comments in $(lang_name "$pr_lang"); the roadmap in $(lang_name "$roadmap_lang")."
 export STACK_SECTIONS STACK_RULES LANGUAGE_RULE
 render "$skill/assets/AGENTS.md" >AGENTS.md
 
 if [ "$host" = github ]; then
   mkdir -p .github/workflows
-  render "$stack_dir/ci.yml" >.github/workflows/ci.yml
+  render "$(template ci.yml)" >.github/workflows/ci.yml
   managed="$managed .github/workflows/ci.yml"
   if [ "$coderabbit" = true ]; then
     cp "$skill/assets/coderabbit.yaml" .coderabbit.yaml

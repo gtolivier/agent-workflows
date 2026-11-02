@@ -9,7 +9,8 @@
     extends: [comments.recommended],
     rules: {
       complexity: ['error', 10],
-      // A component, directive or service may need no member of its own.
+      // A class a framework decorates (an Angular component, directive or
+      // service) may need no member of its own.
       '@typescript-eslint/no-extraneous-class': ['error', { allowWithDecorator: true }],
       '@typescript-eslint/no-magic-numbers': [
         'error',

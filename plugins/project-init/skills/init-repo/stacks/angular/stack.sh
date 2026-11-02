@@ -25,23 +25,11 @@ stack_valid_name() {
   done
 }
 
+. "$STACK_DIR/../_node/node.sh"
+
 # The default runtime: the major version of the latest Node LTS.
 stack_runtime_default() {
-  curl -fsSL --max-time 30 https://nodejs.org/dist/index.json |
-    jq -er '[.[] | select(.lts != false)][0].version | ltrimstr("v") | split(".")[0]'
-}
-
-# Fail unless the Node on PATH has the major version $1.
-node_matches() {
-  command -v node >/dev/null && command -v npx >/dev/null || {
-    echo "Node $1 is missing: install it (nvm install $1, fnm, volta…)." >&2
-    return 1
-  }
-  current=$(node -p 'process.versions.node.split(".")[0]')
-  [ "$current" = "$1" ] || {
-    echo "Node $current is on PATH, the project uses Node $1: switch to it (nvm use $1, fnm, volta…)." >&2
-    return 1
-  }
+  node_lts_major
 }
 
 # Generate the project with its official tools. Environment: NAME,
@@ -79,7 +67,7 @@ stack_generate() {
     '      "path": "./tsconfig.spec.json"\n    },\n    {\n      "path": "./e2e/tsconfig.json"'
   replace_line src/main.ts 'bootstrapApplication(App, appConfig).catch((err) => console.error(err));' \
     'bootstrapApplication(App, appConfig).catch((error: unknown) => {\n  console.error(error);\n});'
-  eslint_rules
+  eslint_config
   npx ng config "projects.$NAME.architect.lint.options.lintFilePatterns" \
     '["src/**/*.ts","src/**/*.html","e2e/**/*.ts","playwright.config.ts"]'
 
@@ -92,7 +80,7 @@ stack_generate() {
   cp "$STACK_DIR/app.spec.ts" src/app/app.spec.ts
   mkdir -p e2e
   cp "$STACK_DIR/e2e-tsconfig.json" e2e/tsconfig.json
-  cp "$STACK_DIR/accessibility.spec.ts" e2e/accessibility.spec.ts
+  cp "$NODE_DIR/accessibility.spec.ts" e2e/accessibility.spec.ts
   # The register is rewritten by project-init's scripts, not by Prettier.
   printf '%s\n' .project-init.yml >.prettierignore
 
@@ -105,15 +93,6 @@ stack_generate() {
   [ "$LICENSE" = none ] || npm pkg set license="$LICENSE"
   echo "$RUNTIME" >.nvmrc
   npx prettier --write --log-level warn .
-}
-
-# Replace a whole line of a generated file, and fail if the generator no
-# longer writes it. "\n" in the new line starts another line.
-replace_line() {
-  awk -v old="$2" -v new="$3" '$0 == old { print new; n++; next } { print }
-    END { exit n != 1 }' "$1" >"$1.new" ||
-    die "$1: expected the line '$2' once — has a generator's template changed?"
-  mv "$1.new" "$1"
 }
 
 # Playwright's generated config: tests in e2e/, against ng serve, which it
@@ -133,16 +112,11 @@ playwright_config() {
   replace_line playwright.config.ts '  // },' '  },'
 }
 
-# The clean-code rules, at the end of angular-eslint's config: no CLI adds
-# rules.
-eslint_rules() {
+# The clean-code rules, at the end of angular-eslint's config.
+eslint_config() {
   replace_line eslint.config.js "const angular = require('angular-eslint');" \
     "const angular = require('angular-eslint');\nconst comments = require('@eslint-community/eslint-plugin-eslint-comments/configs');"
-  awk 'NR == FNR { rules = rules $0 "\n"; next }
-    $0 == "]);" { printf "%s", rules; n++ } { print }
-    END { exit n != 1 }' "$STACK_DIR/eslint-rules.js" eslint.config.js >eslint.config.js.new ||
-    die "eslint.config.js: expected one closing ']);' — has angular-eslint's template changed?"
-  mv eslint.config.js.new eslint.config.js
+  eslint_rules eslint.config.js
 }
 
 # Variables for ci.yml and agents.md: ANGULAR_PRACTICES comes from
