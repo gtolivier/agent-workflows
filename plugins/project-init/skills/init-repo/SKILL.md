@@ -69,7 +69,8 @@ folder starting with `_` holds code the stacks share, not a stack.
 4. Django: start the database first, `docker compose up -d --wait` in the
    repository — if port 5432 is taken (Postgres.app…), set
    `POSTGRES_PORT` and the port of `DATABASE_URL` in its `.env`, or point
-   `DATABASE_URL` to that PostgreSQL. Then run `scripts/commit.sh <dir>`.
+   `DATABASE_URL` to that PostgreSQL after creating the database there
+   (`createdb <name>`). Then run `scripts/commit.sh <dir>`.
    It refuses while a placeholder remains
    or a stack check fails, then makes the first commit on `main`. In a
    workspace, it also adds the repository to the workspace's list and

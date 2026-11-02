@@ -58,7 +58,7 @@ jobs:
         ports:
           - 5432:5432
         options: >-
-          --health-cmd pg_isready
+          --health-cmd "pg_isready -h 127.0.0.1 -U postgres"
           --health-interval 2s
           --health-timeout 5s
           --health-retries 15
@@ -69,7 +69,8 @@ jobs:
           python-version: ${{ matrix.python }}
           enable-cache: true
       - run: uv sync --locked
-      - run: uv run --no-sync python manage.py check
+      # --database: the database checks too, so the database must answer.
+      - run: uv run --no-sync python manage.py check --database default
       # No model change without its migration.
       - run: uv run --no-sync python manage.py makemigrations --check --dry-run
       - run: uv run --no-sync pytest

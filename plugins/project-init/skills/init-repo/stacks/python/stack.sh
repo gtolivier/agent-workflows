@@ -2,8 +2,6 @@
 # Sourced by init-repo.sh and commit.sh. The functions run from inside the
 # repository; STACK_DIR is this folder.
 
-. "$STACK_DIR/../_python/python.sh"
-
 STACK_SUMMARY="Python library: uv, pytest, ruff, mypy (strict)"
 # GitHub's .gitignore template, used when the generator writes none.
 GITIGNORE_TEMPLATE=Python
@@ -11,13 +9,11 @@ GITIGNORE_TEMPLATE=Python
 RUNTIME_DEFAULT=3.12
 # The newest Python, for development and the CI. Bump it when one is out.
 PYTHON_NEWEST=3.14
+# The packages stack_generate adds, PEP 503-normalized: no project may
+# take their name.
+PYTHON_DEPENDENCIES="pytest ruff mypy"
 
-# A project name as PEP 508 has it: letters, digits, '.', '_', '-', starting
-# and ending with a letter or digit.
-STACK_NAME_RULE="letters, digits, '.', '_' and '-', starting and ending with a letter or digit"
-stack_valid_name() {
-  printf '%s' "$1" | grep -Eq '^([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9._-]*[A-Za-z0-9])$'
-}
+. "$STACK_DIR/../_python/python.sh"
 
 # Generate the project with its official tools. Environment: NAME,
 # DESCRIPTION, RUNTIME, LICENSE (SPDX id or "none").
@@ -36,14 +32,7 @@ stack_generate() {
   PACKAGE=$package render "$STACK_DIR/test_package.py" >tests/test_package.py
   # Tool settings: no CLI writes them.
   render "$STACK_DIR/pyproject.toml" >>pyproject.toml
-  if [ "$LICENSE" != none ]; then
-    # PEP 639 metadata, right after the description uv wrote.
-    awk -v id="$LICENSE" '{ print }
-      /^description = / { print "license = \"" id "\""; print "license-files = [\"LICENSE\"]" }' \
-      pyproject.toml >pyproject.toml.new && mv pyproject.toml.new pyproject.toml
-  fi
-  # Re-lock: the metadata changed.
-  uv lock --quiet
+  python_license
 }
 
 # Variables for ci.yml and agents.md.

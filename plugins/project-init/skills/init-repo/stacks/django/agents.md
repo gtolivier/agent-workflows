@@ -1,13 +1,15 @@
 ## Commands
 
 - Install: `uv sync`
+- Local settings, once per clone: `cp .env.example .env`, then fill in
+  `DJANGO_SECRET_KEY` (the file says how to make one)
 - Database: `docker compose up -d --wait` (PostgreSQL; its port and
   `DATABASE_URL` are in `.env`)
 - Run: `uv run python manage.py runserver`
 - Test: `uv run pytest`
 - Lint: `uv run ruff check` — format: `uv run ruff format`
 - Type check: `uv run --group typecheck mypy` (strict, with django-stubs)
-- Django checks: `uv run python manage.py check` and
+- Django checks: `uv run python manage.py check --database default` and
   `uv run python manage.py makemigrations --check --dry-run` (no model
   change without its migration)
 

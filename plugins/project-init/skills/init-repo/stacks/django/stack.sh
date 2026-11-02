@@ -3,8 +3,6 @@
 # Sourced by init-repo.sh and commit.sh. The functions run from inside the
 # repository; STACK_DIR is this folder.
 
-. "$STACK_DIR/../_python/python.sh"
-
 STACK_SUMMARY="Django site: uv, PostgreSQL, django-environ, pytest-django, ruff, mypy (strict)"
 # GitHub's .gitignore template, used when the generator writes none.
 GITIGNORE_TEMPLATE=Python
@@ -18,13 +16,11 @@ PYTHON_NEWEST=3.14
 # The PostgreSQL major version of compose.yaml and the CI. Bump it when one
 # is out.
 POSTGRES_VERSION=18
+# The packages stack_generate adds, PEP 503-normalized: no project may
+# take their name.
+PYTHON_DEPENDENCIES="django django-environ psycopg pytest pytest-django ruff django-stubs mypy"
 
-# A project name as PEP 508 has it: letters, digits, '.', '_', '-', starting
-# and ending with a letter or digit.
-STACK_NAME_RULE="letters, digits, '.', '_' and '-', starting and ending with a letter or digit"
-stack_valid_name() {
-  printf '%s' "$1" | grep -Eq '^([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9._-]*[A-Za-z0-9])$'
-}
+. "$STACK_DIR/../_python/python.sh"
 
 # Generate the project with its official tools. Environment: NAME,
 # DESCRIPTION, RUNTIME, LICENSE (SPDX id or "none"), and the variables of
@@ -49,20 +45,14 @@ stack_generate() {
   # a secret key of its own.
   render "$STACK_DIR/env.example" >.env.example
   key=$(uv run --quiet python -c 'import secrets; print(secrets.token_urlsafe(50))')
-  awk -v key="$key" '/^DJANGO_SECRET_KEY=/ { print "DJANGO_SECRET_KEY=" key; next } { print }' \
-    .env.example >.env
+  # Readable by its owner only: it holds the key.
+  (umask 077 && awk -v key="$key" '/^DJANGO_SECRET_KEY=/ { print "DJANGO_SECRET_KEY=" key; next } { print }' \
+    .env.example >.env)
   render "$STACK_DIR/compose.yaml" >compose.yaml
 
   # Tool settings: no CLI writes them.
   render "$STACK_DIR/pyproject.toml" >>pyproject.toml
-  if [ "$LICENSE" != none ]; then
-    # PEP 639 metadata, right after the description uv wrote.
-    awk -v id="$LICENSE" '{ print }
-      /^description = / { print "license = \"" id "\""; print "license-files = [\"LICENSE\"]" }' \
-      pyproject.toml >pyproject.toml.new && mv pyproject.toml.new pyproject.toml
-  fi
-  # Re-lock: the metadata changed.
-  uv lock --quiet
+  python_license
   # Django's code style is not ruff's: sort the imports, then format.
   uv run --quiet ruff check --fix --quiet --exit-zero
   uv run --quiet ruff format --quiet
@@ -82,7 +72,7 @@ replace_line() {
 # locally. Fails if a line to replace is not there.
 django_settings() {
   awk '
-    function done(k) { if (k in seen) bad = 1; seen[k] = 1 }
+    function done(k) { if (k in seen) bad = 1; else n++; seen[k] = 1 }
     $0 == "from pathlib import Path" {
       print; print ""; print "import environ"; done("import"); next
     }
@@ -103,7 +93,7 @@ django_settings() {
     $0 == "DATABASES = {" { db = 1; next }
     db { if ($0 == "}") { print "DATABASES = {\"default\": env.db(\"DATABASE_URL\")}"; db = 0; done("db") }; next }
     { print }
-    END { exit bad || length(seen) != 6 }
+    END { exit bad || n != 6 }
   ' "$1" >"$1.new" || die "$1: a line to replace is missing — has Django's template changed?"
   mv "$1.new" "$1"
 }
@@ -131,17 +121,23 @@ stack_managed() {
 # Everything the CI checks, locally, with the tests on each Python of the
 # CI. The database must be running.
 stack_check() {
+  # Only .gitignore keeps the secret key of .env out of the commits.
+  git check-ignore -q .env || {
+    echo ".env holds the secret key, and git does not ignore it: add it to .gitignore." >&2
+    return 1
+  }
   uv lock --check &&
     uv run ruff check &&
     uv run ruff format --check &&
     uv run --group typecheck mypy || return 1
-  uv run python manage.py shell -c \
-    'from django.db import connection; connection.ensure_connection()' >/dev/null 2>&1 || {
-    echo "The database at DATABASE_URL (.env) does not answer: start it with" \
-      "'docker compose up -d --wait', or point DATABASE_URL to another PostgreSQL." >&2
+  if ! error=$(uv run python manage.py shell -c \
+    'from django.db import connection; connection.ensure_connection()' 2>&1 >/dev/null); then
+    echo "The database at DATABASE_URL (.env) does not answer: $(printf '%s\n' "$error" | tail -n 1)" >&2
+    echo "Start it with 'docker compose up -d --wait', or point DATABASE_URL to another" \
+      "PostgreSQL where the database exists (createdb)." >&2
     return 1
-  }
-  python_each 'python manage.py check &&
+  fi
+  python_each 'python manage.py check --database default &&
     python manage.py makemigrations --check --dry-run &&
     pytest'
 }
