@@ -180,6 +180,50 @@ passing test.
 
 ### `project-init` — a common layer for a machine and its repositories
 
+Four skills, each backed by scripts that do the work: official generators
+and CLIs (`uv`, `git`, `gh`) write the files, and Claude only asks the
+choices and writes the prose the scripts leave as `TODO(project-init)`.
+Every workspace and repository gets a register, `.project-init.yml`: the
+project-init version that set it up, the choices made (license,
+visibility, languages…), the files it manages, and the deviations from
+the common layer, recorded at the end of the pull request that makes them.
+
+**`init-workspace`: one folder for a project's repositories.** The folder
+becomes a private git repository whose `.gitignore` is an allowlist: it
+versions `AGENTS.md` (the project's purpose, a generated list of its
+repositories, the shared workflow), `DECISIONS.md`, `ROADMAP.md` when the
+roadmap is shared, and the register, while each repository keeps its own
+history. It works on a new folder or on one that already holds
+repositories. `.claude/settings.local.json` — never committed — denies
+the commands that read or change credentials and, on GitHub, makes git
+authenticate with `gh`: add your own `GH_TOKEN` under `"env"`, for the
+Claude Code sessions started at the workspace's root.
+
+**`init-repo <stack>`: a new repository.** The stack's generator writes
+the project (`python`: `uv init --lib`, with pytest, ruff and strict
+mypy), then the script adds the common layer: `.gitignore`, the `LICENSE`
+you choose for each project (or none), `README.md`, `ROADMAP.md`, and an
+`AGENTS.md` with the stack's commands and rules. Test-first development
+through `/tdd:feature` is your choice: required from the start, or turned
+on later with the skill's `tdd.sh`. On GitHub, it
+adds the CI — lint, type check, and tests on the oldest and newest
+supported versions — and, for a public repository, CodeRabbit. A
+repository can also live on another host or on this machine only. Its
+`commit.sh` makes the first commit only once no placeholder remains and
+every check passes.
+
+**`init-github`: the GitHub side.** `setup-github.sh <dir>...` creates
+the repositories if missing and pushes them; for a repository, it allows
+squash merges only (title = pull request title), deletes merged branches,
+adds a "Protect main" ruleset (pull request and CI checks required, no
+force push) and, when public, push protection. Run it with your own `gh`
+login in a normal terminal; `--dry-run` shows what it would do. Rulesets
+on a private repository need GitHub Pro.
+
+Languages: code, comments, documentation, commits and issues are always
+in English; pull requests, their comments and the roadmap may be in
+another language, asked for private repositories.
+
 **`init-machine`: no secret leaves the machine through git.** Ask Claude
 Code to set up the machine (or run the skill's `scripts/install.sh`
 yourself): it installs [gitleaks](https://github.com/gitleaks/gitleaks)

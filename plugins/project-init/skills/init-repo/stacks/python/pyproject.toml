@@ -1,0 +1,39 @@
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff.lint]
+select = [
+    "E", "F", "I", "UP", "B",
+    "C90",  # function complexity
+    "N",    # PEP 8 naming
+    "SIM",  # simplifications
+    "RET",  # return statements
+    "ARG",  # unused arguments
+    "ERA",  # commented-out code
+    "PL",   # pylint, including PLR2004 (magic values)
+    "PGH",  # blanket `# noqa` / `# type: ignore` (no error code)
+    "RUF100",  # unused `# noqa`
+]
+
+[tool.ruff.lint.flake8-unused-arguments]
+# `*args` / `**kwargs` that a signature requires (overridden methods).
+ignore-variadic-names = true
+
+[tool.ruff.lint.pylint]
+# Magic values: flag strings too, not only numbers (the default allows
+# "str" and "bytes").
+allow-magic-value-types = []
+
+[tool.ruff.lint.per-file-ignores]
+# Literal examples are what tests are made of; pytest fixtures are often
+# requested for their side effects only.
+"tests/**" = ["PLR2004", "ARG001", "ARG002"]
+
+[tool.mypy]
+files = ["src", "tests"]
+# The oldest supported Python, whatever interpreter runs mypy.
+python_version = "@RUNTIME@"
+strict = true
+# A `# type: ignore` must name the error it silences.
+enable_error_code = ["ignore-without-code"]

@@ -1,0 +1,15 @@
+# Allowlist: this repository tracks only the files below. The repositories
+# this folder holds have their own history and stay out of it, and so do
+# .claude/settings.local.json (this machine's credentials) and everything
+# else. To track one more file or folder, add a "!/<path>" line.
+/*
+!/.gitignore
+!/AGENTS.md
+!/DECISIONS.md
+!/ROADMAP.md
+!/.project-init.yml
+!/*.code-workspace
+!/.claude/
+/.claude/*
+!/.claude/settings.json
+!/.claude/hooks/
