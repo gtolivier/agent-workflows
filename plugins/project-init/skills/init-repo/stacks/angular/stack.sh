@@ -10,9 +10,9 @@ GITIGNORE_TEMPLATE=Node
 # development and the CI. By default the latest LTS (stack_runtime_default);
 # Angular needs 22 or later.
 RUNTIME_MIN=22
-# The packages stack_generate adds, unscoped: npm refuses a project that
-# depends on itself.
-NODE_DEPENDENCIES="rxjs tslib angular-eslint eslint prettier typescript typescript-eslint vitest playwright"
+# The unscoped packages stack_generate adds, jsdom (from ng new) included:
+# npm refuses a project that depends on itself.
+NODE_DEPENDENCIES="rxjs tslib angular-eslint eslint prettier typescript typescript-eslint vitest jsdom playwright"
 
 # A project name as Angular has it: lowercase words of letters and digits
 # joined by '-', starting with a letter. Used as is for the npm package and
@@ -27,7 +27,7 @@ stack_valid_name() {
 
 # The default runtime: the major version of the latest Node LTS.
 stack_runtime_default() {
-  curl -fsSL https://nodejs.org/dist/index.json |
+  curl -fsSL --max-time 30 https://nodejs.org/dist/index.json |
     jq -er '[.[] | select(.lts != false)][0].version | ltrimstr("v") | split(".")[0]'
 }
 

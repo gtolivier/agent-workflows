@@ -51,10 +51,11 @@ folder starting with `_` holds code the stacks share, not a stack.
      go test-first through `/tdd:feature` (AGENTS.md requires it); `off`
      leaves it available on request, to turn on later with `tdd.sh`.
      Ask: there is no default.
-   - **Oldest supported runtime version** (python: default 3.12; django:
-     default and minimum 3.12, which Django 6 requires; angular: a Node
-     major version, default the latest LTS, minimum 22 — that Node must be
-     the one on `PATH`, at a release Angular supports).
+   - **Runtime version** (python: the oldest supported, default 3.12;
+     django: the oldest supported, default and minimum 3.12, which Django 6
+     requires; angular: the Node major version of development and the CI,
+     default the latest LTS, minimum 22 — the Node on `PATH` must have that
+     major version, at a release Angular supports, such as 24.15 or later).
    - **Languages,** for a private repository: of pull requests and their
      comments, and of the roadmap (default English; in a workspace, the
      workspace's). A public repository keeps English. Code, comments,
@@ -75,7 +76,10 @@ folder starting with `_` holds code the stacks share, not a stack.
    repository — if port 5432 is taken (Postgres.app…), set
    `POSTGRES_PORT` and the port of `DATABASE_URL` in its `.env`, or point
    `DATABASE_URL` to that PostgreSQL after creating the database there
-   (`createdb <name>`). Then run `scripts/commit.sh <dir>`.
+   (`createdb <name>`). Angular: run `npm run format` first — Prettier
+   checks the prose you wrote — and stop any `npm start`: the end-to-end
+   tests start a server of their own on port 4200. Then run
+   `scripts/commit.sh <dir>`.
    It refuses while a placeholder remains
    or a stack check fails, then makes the first commit on `main`. In a
    workspace, it also adds the repository to the workspace's list and

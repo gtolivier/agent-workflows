@@ -12,7 +12,7 @@
   type-checked rules), Angular's conventions and template accessibility.
   An `eslint-disable` comment must name the rule it silences and say why
   after `--` (ESLint enforces it, and reports one that silences nothing);
-  so must a `@ts-expect-error`.
+  a `@ts-expect-error` must say why too (typescript-eslint enforces it).
 - **Styles:** native CSS first (nesting, custom properties); Sass only for
   what CSS lacks, mixins and functions, through `@use`, never `@import`.
 - **Accessibility:** WCAG 2.2 AA. `e2e/accessibility.spec.ts` runs axe on

@@ -1,7 +1,7 @@
 ## Commands
 
 - Node: the major version in `.nvmrc` (`nvm use`, fnm or volta read it)
-- Install: `npm install`, then once per machine `npx playwright install chromium`
+- Install: `npm ci`, then once per machine `npx playwright install chromium`
   (the browser of the unit and end-to-end tests)
 - Run: `npm start` (http://localhost:4200/)
 - Test: `npm run test:ci` (Vitest in headless Chromium, once) — `npm test`
