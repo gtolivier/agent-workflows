@@ -105,7 +105,15 @@ case $host in
   none) visibility=none ;;
   *) die "--host github|other|none is required" ;;
 esac
-[ -n "$runtime" ] || runtime=$RUNTIME_DEFAULT
+if [ -z "$runtime" ]; then
+  # A stack may compute its default, such as the latest release, instead
+  # of setting RUNTIME_DEFAULT.
+  if command -v stack_runtime_default >/dev/null 2>&1; then
+    runtime=$(stack_runtime_default) || die "could not compute the $stack stack's default runtime: pass --runtime"
+  else
+    runtime=$RUNTIME_DEFAULT
+  fi
+fi
 # RUNTIME_MIN, if the stack sets one: the oldest runtime it supports.
 if [ -n "${RUNTIME_MIN-}" ] &&
   [ "$(printf '%s\n%s\n' "$RUNTIME_MIN" "$runtime" | sort -V | head -n 1)" != "$RUNTIME_MIN" ]; then
@@ -285,4 +293,4 @@ checks='[]'
 echo
 echo "Created $dir ($stack, host $host, license $license, TDD $tdd)."
 echo "Placeholders to fill before commit.sh:"
-grep -rn --exclude-dir=.git --exclude-dir=.venv 'TODO(project-init)' . | sed 's/^\.\//  /' || true
+grep -rn --exclude-dir=.git --exclude-dir=.venv --exclude-dir=node_modules 'TODO(project-init)' . | sed 's/^\.\//  /' || true

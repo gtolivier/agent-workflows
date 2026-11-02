@@ -1,6 +1,6 @@
 ---
 name: init-repo
-description: Create a new repository for a stack (python, django) with its official generator and tools, and the common layer — .gitignore, LICENSE, README.md, AGENTS.md with the stack's rules and, when chosen, test-first development, GitHub Actions CI and CodeRabbit when on GitHub, and the register .project-init.yml — inside a workspace or on its own, on GitHub, another host or this machine only. Use when the user asks to create, start, scaffold or set up a new repository or project.
+description: Create a new repository for a stack (python, django, angular) with its official generator and tools, and the common layer — .gitignore, LICENSE, README.md, AGENTS.md with the stack's rules and, when chosen, test-first development, GitHub Actions CI and CodeRabbit when on GitHub, and the register .project-init.yml — inside a workspace or on its own, on GitHub, another host or this machine only. Use when the user asks to create, start, scaffold or set up a new repository or project.
 ---
 
 # init-repo
@@ -16,6 +16,7 @@ work; your part is to ask the choices, write the prose they leave as
 |---|---|---|
 | `python` | a library: `uv init --lib`; pytest, ruff, mypy (strict) | `lint`, `typecheck`, `test (python <version>)` for the oldest supported version and the newest |
 | `django` | a site: `uv init --bare`, `django-admin startproject config .`; PostgreSQL (`compose.yaml`), django-environ, pytest-django, ruff, mypy (strict) with django-stubs | the same, the tests running `manage.py check` and `makemigrations --check` too |
+| `angular` | an application: `ng new` (zoneless, SCSS, no SSR), `ng add angular-eslint` (typescript-eslint `strictTypeChecked`), `ng add @vitest/browser-playwright`, `npm init playwright`; npm, Prettier, Vitest in Chromium, Playwright with axe | `lint` (ESLint and Prettier), `typecheck`, `test`, `build`, `e2e` |
 
 Each stack lives in `stacks/<stack>/`: `stack.sh` and its templates. A
 folder starting with `_` holds code the stacks share, not a stack.
@@ -32,12 +33,14 @@ folder starting with `_` holds code the stacks share, not a stack.
 | `.github/workflows/ci.yml` | on GitHub: the stack's checks |
 | `.coderabbit.yaml` | on GitHub, public repositories, unless `--no-coderabbit` |
 | `compose.yaml`, `.env.example`, `.env` | django: the local PostgreSQL, and the settings that differ between environments — `.env`, ignored by git, gets a secret key of its own |
+| `.nvmrc`, `.prettierignore`, `e2e/` | angular: the Node major version, which the CI reads; the register, left out of Prettier; an accessibility test of the home page with axe |
 | `.project-init.yml` | the register: project-init's version, the choices, the CI checks to require, the files it manages, the deviations |
 
 ## Steps
 
 1. Ask the user, in one message — never choose for them:
-   - **Name** (the folder: letters, digits, `.`, `_`, `-`) and a
+   - **Name** (the folder; python and django: letters, digits, `.`, `_`,
+     `-`; angular: lowercase letters and digits, words joined by `-`) and a
      **one-line description** (no `"` or `\`).
    - **License:** an SPDX id (`MIT`, `Apache-2.0`, `AGPL-3.0-or-later`…)
      or `none`. Ask for every repository: there is no default. For the GPL
@@ -48,8 +51,11 @@ folder starting with `_` holds code the stacks share, not a stack.
      go test-first through `/tdd:feature` (AGENTS.md requires it); `off`
      leaves it available on request, to turn on later with `tdd.sh`.
      Ask: there is no default.
-   - **Oldest supported runtime version** (python: default 3.12; django:
-     default and minimum 3.12, which Django 6 requires).
+   - **Runtime version** (python: the oldest supported, default 3.12;
+     django: the oldest supported, default and minimum 3.12, which Django 6
+     requires; angular: the Node major version of development and the CI,
+     default the latest LTS, minimum 22 — the Node on `PATH` must have that
+     major version, at a release Angular supports, such as 24.15 or later).
    - **Languages,** for a private repository: of pull requests and their
      comments, and of the roadmap (default English; in a workspace, the
      workspace's). A public repository keeps English. Code, comments,
@@ -70,7 +76,10 @@ folder starting with `_` holds code the stacks share, not a stack.
    repository — if port 5432 is taken (Postgres.app…), set
    `POSTGRES_PORT` and the port of `DATABASE_URL` in its `.env`, or point
    `DATABASE_URL` to that PostgreSQL after creating the database there
-   (`createdb <name>`). Then run `scripts/commit.sh <dir>`.
+   (`createdb <name>`). Angular: run `npm run format` first — Prettier
+   checks the prose you wrote — and stop any `npm start`: the end-to-end
+   tests start a server of their own on port 4200. Then run
+   `scripts/commit.sh <dir>`.
    It refuses while a placeholder remains
    or a stack check fails, then makes the first commit on `main`. In a
    workspace, it also adds the repository to the workspace's list and
