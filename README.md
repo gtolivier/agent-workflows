@@ -203,14 +203,17 @@ Claude Code sessions started at the workspace's root.
 the project — `python`: a library, `uv init --lib` with pytest, ruff and
 strict mypy; `django`: a site, `django-admin startproject` with
 PostgreSQL in `compose.yaml`, settings from the environment through
-django-environ, pytest-django, ruff and strict mypy with django-stubs —
-then the script adds the common layer: `.gitignore`, the `LICENSE`
+django-environ, pytest-django, ruff and strict mypy with django-stubs;
+`angular`: an application, `ng new` without SSR, with angular-eslint,
+Prettier, Vitest in Chromium and Playwright end-to-end tests that check
+accessibility with axe — then the script adds the common layer: `.gitignore`, the `LICENSE`
 you choose for each project (or none), `README.md`, `ROADMAP.md`, and an
 `AGENTS.md` with the stack's commands and rules. Test-first development
 through `/tdd:feature` is your choice: required from the start, or turned
 on later with the skill's `tdd.sh`. On GitHub, it
-adds the CI — lint, type check, and tests on the oldest and newest
-supported versions — and, for a public repository, CodeRabbit. A
+adds the CI — lint, type check, and tests (Python: on the oldest and
+newest supported versions; Angular: unit and end-to-end, and the build)
+— and, for a public repository, CodeRabbit. A
 repository can also live on another host or on this machine only. Its
 `commit.sh` makes the first commit only once no placeholder remains and
 every check passes.
