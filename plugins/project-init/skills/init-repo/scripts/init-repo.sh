@@ -74,9 +74,13 @@ while [ $# -gt 0 ]; do
   shift 2
 done
 
+# A stack is a folder of stacks/; those starting with "_" hold code the
+# stacks share.
 stack_dir=$skill/stacks/$stack
-[ -f "$stack_dir/stack.sh" ] ||
-  die "unknown stack '$stack' (known: $(ls "$skill/stacks" | tr '\n' ' '))"
+case $stack in _* | */*) stack_dir='' ;; esac
+[ -n "$stack_dir" ] && [ -f "$stack_dir/stack.sh" ] ||
+  die "unknown stack '$stack' (known: $(ls "$skill/stacks" | grep -v '^_' | tr '\n' ' '))"
+STACK_DIR=$stack_dir
 . "$stack_dir/stack.sh"
 
 name=$(basename -- "$dir")
@@ -101,6 +105,12 @@ case $host in
   none) visibility=none ;;
   *) die "--host github|other|none is required" ;;
 esac
+[ -n "$runtime" ] || runtime=$RUNTIME_DEFAULT
+# RUNTIME_MIN, if the stack sets one: the oldest runtime it supports.
+if [ -n "${RUNTIME_MIN-}" ] &&
+  [ "$(printf '%s\n%s\n' "$RUNTIME_MIN" "$runtime" | sort -V | head -n 1)" != "$RUNTIME_MIN" ]; then
+  die "--runtime $runtime: the $stack stack needs $RUNTIME_MIN or later"
+fi
 [ "$host" = github ] || coderabbit=false
 [ "$visibility" = public ] || coderabbit=false
 for tool in git jq curl uv; do
@@ -179,8 +189,6 @@ cleanup() {
   echo "init-repo: failed; $dir is back as it was" >&2
 }
 trap 'cleanup $?' EXIT
-
-[ -n "$runtime" ] || runtime=$RUNTIME_DEFAULT
 
 export NAME="$name" DESCRIPTION="$description" RUNTIME="$runtime" \
   LICENSE="$license" STACK_DIR="$stack_dir"

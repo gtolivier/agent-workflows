@@ -1,6 +1,6 @@
 ---
 name: init-repo
-description: Create a new repository for a stack (python) with its official generator and tools, and the common layer — .gitignore, LICENSE, README.md, AGENTS.md with the stack's rules and, when chosen, test-first development, GitHub Actions CI and CodeRabbit when on GitHub, and the register .project-init.yml — inside a workspace or on its own, on GitHub, another host or this machine only. Use when the user asks to create, start, scaffold or set up a new repository or project.
+description: Create a new repository for a stack (python, django) with its official generator and tools, and the common layer — .gitignore, LICENSE, README.md, AGENTS.md with the stack's rules and, when chosen, test-first development, GitHub Actions CI and CodeRabbit when on GitHub, and the register .project-init.yml — inside a workspace or on its own, on GitHub, another host or this machine only. Use when the user asks to create, start, scaffold or set up a new repository or project.
 ---
 
 # init-repo
@@ -14,9 +14,11 @@ work; your part is to ask the choices, write the prose they leave as
 
 | Stack | Generator and tools | Checks (CI and `commit.sh`) |
 |---|---|---|
-| `python` | `uv init --lib`; pytest, ruff, mypy (strict) | `lint`, `typecheck`, `test (python <version>)` from the oldest supported version to the newest |
+| `python` | a library: `uv init --lib`; pytest, ruff, mypy (strict) | `lint`, `typecheck`, `test (python <version>)` for the oldest supported version and the newest |
+| `django` | a site: `uv init --bare`, `django-admin startproject config .`; PostgreSQL (`compose.yaml`), django-environ, pytest-django, ruff, mypy (strict) with django-stubs | the same, the tests running `manage.py check` and `makemigrations --check` too |
 
-Each stack lives in `stacks/<stack>/`: `stack.sh` and its templates.
+Each stack lives in `stacks/<stack>/`: `stack.sh` and its templates. A
+folder starting with `_` holds code the stacks share, not a stack.
 
 ## What it sets up
 
@@ -29,6 +31,7 @@ Each stack lives in `stacks/<stack>/`: `stack.sh` and its templates.
 | `AGENTS.md` | the stack's commands and layout, the `/tdd:feature` conventions, and the rules: test-first (with `--tdd on`), dependencies, generated files, clean code, supported versions, language, common layer |
 | `.github/workflows/ci.yml` | on GitHub: the stack's checks |
 | `.coderabbit.yaml` | on GitHub, public repositories, unless `--no-coderabbit` |
+| `compose.yaml`, `.env.example`, `.env` | django: the local PostgreSQL, and the settings that differ between environments — `.env`, ignored by git, gets a secret key of its own |
 | `.project-init.yml` | the register: project-init's version, the choices, the CI checks to require, the files it manages, the deviations |
 
 ## Steps
@@ -45,7 +48,8 @@ Each stack lives in `stacks/<stack>/`: `stack.sh` and its templates.
      go test-first through `/tdd:feature` (AGENTS.md requires it); `off`
      leaves it available on request, to turn on later with `tdd.sh`.
      Ask: there is no default.
-   - **Oldest supported runtime version** (python: default 3.12).
+   - **Oldest supported runtime version** (python: default 3.12; django:
+     default and minimum 3.12, which Django 6 requires).
    - **Languages,** for a private repository: of pull requests and their
      comments, and of the roadmap (default English; in a workspace, the
      workspace's). A public repository keeps English. Code, comments,
@@ -62,7 +66,11 @@ Each stack lives in `stacks/<stack>/`: `stack.sh` and its templates.
    English, from what the user said about the project. Ask what you
    cannot infer. Add no code: the first behavior comes in its own pull
    request, test-first when TDD is on.
-4. Run `scripts/commit.sh <dir>`. It refuses while a placeholder remains
+4. Django: start the database first, `docker compose up -d --wait` in the
+   repository — if port 5432 is taken (Postgres.app…), set
+   `POSTGRES_PORT` and the port of `DATABASE_URL` in its `.env`, or point
+   `DATABASE_URL` to that PostgreSQL. Then run `scripts/commit.sh <dir>`.
+   It refuses while a placeholder remains
    or a stack check fails, then makes the first commit on `main`. In a
    workspace, it also adds the repository to the workspace's list and
    commits that there.
@@ -80,5 +88,7 @@ the change goes through a pull request like any other.
 
 ## Not covered yet
 
-CI for hosts other than GitHub: on `other` or `none`, the checks run only
-through `commit.sh` and locally.
+- CI for hosts other than GitHub: on `other` or `none`, the checks run
+  only through `commit.sh` and locally.
+- A reusable Django app (a package other sites install): `django` makes a
+  site; the app will be a stack of its own.

@@ -1,0 +1,23 @@
+# The local database: `docker compose up -d --wait`. POSTGRES_PORT comes
+# from .env, whose DATABASE_URL must match. Keep the image's version in
+# sync with the CI's postgres service.
+services:
+  db:
+    image: postgres:@POSTGRES_VERSION@
+    environment:
+      POSTGRES_DB: "@DB_NAME@"
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      # This machine only.
+      - "127.0.0.1:${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - db:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d @DB_NAME@"]
+      interval: 2s
+      timeout: 5s
+      retries: 15
+
+volumes:
+  db:

@@ -2,6 +2,8 @@
 # Sourced by init-repo.sh and commit.sh. The functions run from inside the
 # repository; STACK_DIR is this folder.
 
+. "$STACK_DIR/../_python/python.sh"
+
 STACK_SUMMARY="Python library: uv, pytest, ruff, mypy (strict)"
 # GitHub's .gitignore template, used when the generator writes none.
 GITIGNORE_TEMPLATE=Python
@@ -44,15 +46,9 @@ stack_generate() {
   uv lock --quiet
 }
 
-# The Python versions the CI tests: the oldest supported and the newest.
-stack_pythons() {
-  if [ "$RUNTIME" = "$PYTHON_NEWEST" ]; then echo "$RUNTIME"; else echo "$RUNTIME $PYTHON_NEWEST"; fi
-}
-
 # Variables for ci.yml and agents.md.
 stack_render_env() {
-  PYTHON_MATRIX=$(stack_pythons | sed 's/[^ ][^ ]*/"&"/g; s/ /, /g')
-  export PYTHON_NEWEST PYTHON_MATRIX
+  python_render_env
   export PACKAGE="$(printf '%s' "$NAME" | tr '[:upper:]-.' '[:lower:]__')"
 }
 
@@ -60,7 +56,7 @@ stack_render_env() {
 stack_checks() {
   echo lint
   echo typecheck
-  for v in $(stack_pythons); do echo "test (python $v)"; done
+  python_test_checks
 }
 
 # Files this stack sets up beyond the common ones, for the register.
@@ -69,21 +65,11 @@ stack_managed() {
 }
 
 # Everything the CI checks, locally, with the tests on each Python of the
-# CI. The oldest runs in an environment of its own; its interpreter is
-# looked up from outside the repository, whose .python-version pyenv would
-# apply too. Without it on this machine, only the CI tests it.
+# CI.
 stack_check() {
   uv lock --check &&
     uv run ruff check &&
     uv run ruff format --check &&
-    uv run --group typecheck mypy || return 1
-  for v in $(stack_pythons); do
-    if [ "$v" = "$PYTHON_NEWEST" ]; then
-      uv run pytest || return 1
-    elif py=$(cd / && uv python find "$v" 2>/dev/null); then
-      uv run --isolated --python "$py" pytest || return 1
-    else
-      echo "Python $v is not on this machine: the CI tests it, not this check." >&2
-    fi
-  done
+    uv run --group typecheck mypy &&
+    python_each pytest
 }
