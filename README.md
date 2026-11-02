@@ -200,8 +200,11 @@ authenticate with `gh`: add your own `GH_TOKEN` under `"env"`, for the
 Claude Code sessions started at the workspace's root.
 
 **`init-repo <stack>`: a new repository.** The stack's generator writes
-the project (`python`: `uv init --lib`, with pytest, ruff and strict
-mypy), then the script adds the common layer: `.gitignore`, the `LICENSE`
+the project — `python`: a library, `uv init --lib` with pytest, ruff and
+strict mypy; `django`: a site, `django-admin startproject` with
+PostgreSQL in `compose.yaml`, settings from the environment through
+django-environ, pytest-django, ruff and strict mypy with django-stubs —
+then the script adds the common layer: `.gitignore`, the `LICENSE`
 you choose for each project (or none), `README.md`, `ROADMAP.md`, and an
 `AGENTS.md` with the stack's commands and rules. Test-first development
 through `/tdd:feature` is your choice: required from the start, or turned

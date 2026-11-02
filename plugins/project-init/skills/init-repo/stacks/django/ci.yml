@@ -1,0 +1,76 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# Read-only token: the checks change nothing on GitHub.
+permissions:
+  contents: read
+
+# The settings come from the environment (.env is not committed). The
+# typecheck job needs them too: django-stubs loads the settings. The key is
+# a placeholder, not a secret: the CI serves nothing.
+env:
+  DJANGO_SECRET_KEY: ci-placeholder-not-a-secret
+  DATABASE_URL: postgres://postgres:postgres@localhost:5432/@DB_NAME@
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      # setup-uv publishes no major tags (no @v10): pin the full version.
+      - uses: astral-sh/setup-uv@v10.2.0
+      # ruff only: neither the project nor its runtime dependencies.
+      - run: uv run --locked --only-group dev ruff check
+      - run: uv run --locked --only-group dev ruff format --check
+
+  typecheck:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v10.2.0
+        with:
+          # mypy targets the oldest supported Python (python_version in
+          # pyproject.toml), whatever runs it.
+          python-version: "@PYTHON_NEWEST@"
+          enable-cache: true
+      - run: uv run --locked --group typecheck mypy
+
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # The oldest and the newest supported Python. The job names are the
+        # checks a merge requires (.project-init.yml): keep them in sync.
+        python: [@PYTHON_MATRIX@]
+    name: test (python ${{ matrix.python }})
+    services:
+      # Keep its version in sync with compose.yaml.
+      postgres:
+        image: postgres:@POSTGRES_VERSION@
+        env:
+          POSTGRES_DB: "@DB_NAME@"
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -h 127.0.0.1 -U postgres"
+          --health-interval 2s
+          --health-timeout 5s
+          --health-retries 15
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v10.2.0
+        with:
+          python-version: ${{ matrix.python }}
+          enable-cache: true
+      - run: uv sync --locked
+      # --database: the database checks too, so the database must answer.
+      - run: uv run --no-sync python manage.py check --database default
+      # No model change without its migration.
+      - run: uv run --no-sync python manage.py makemigrations --check --dry-run
+      - run: uv run --no-sync pytest

@@ -33,7 +33,8 @@ left=$(git ls-files --cached --others --exclude-standard -z |
   xargs -0 grep -ln 'TODO(project-init)' 2>/dev/null || true)
 [ -z "$left" ] || die "placeholders left to fill, in: $(echo $left)"
 
-. "$skill/stacks/$stack/stack.sh"
+STACK_DIR=$skill/stacks/$stack
+. "$STACK_DIR/stack.sh"
 echo "Running the $stack checks..."
 stack_check || die "a check failed: fix it, then run commit.sh again"
 
