@@ -31,7 +31,7 @@ under `[module]` in their `hugo.toml`, and get a version with
   `hugo.toml` imports the theme from this folder. Its content shows every
   layout the theme has.
 - `e2e/` — the Playwright tests of the demo site, and the accessibility
-  test of every page.
+  tests (axe), one per page.
 
 ## Test-driven development
 

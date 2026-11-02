@@ -31,7 +31,7 @@
   (`go.mod` and `go.sum` pin its version).
 - `archetypes/` — the front matter of `hugo new content`.
 - `e2e/` — the Playwright tests of the built site, and the accessibility
-  test of every page.
+  tests (axe), one per page.
 
 ## Test-driven development
 

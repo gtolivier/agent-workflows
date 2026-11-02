@@ -21,7 +21,7 @@ die() {
 dir=$1 module=$2 local=''
 shift 2
 case ${1-} in
-  --local) local=${2-}; [ -n "$local" ] || die "--local needs a path" ;;
+  --local) local=${2-}; [ -n "$local" ] && [ $# -eq 2 ] || die "usage: theme.sh <dir> <module> [--local <path>]" ;;
   '') ;;
   *) die "usage: theme.sh <dir> <module> [--local <path>]" ;;
 esac
@@ -31,6 +31,9 @@ printf '%s' "$module" | grep -Eq '^[A-Za-z0-9._~/-]+$' ||
 cd "$dir"
 grep -q '^stack: "hugo"$' .project-init.yml 2>/dev/null || die "$dir is not a hugo site set up by init-repo"
 ! grep -q '^ *\[\[module\.imports\]\]' hugo.toml || die "hugo.toml already imports a module"
+# It deletes the starter's layouts: never on a site already committed.
+! git rev-parse -q --verify HEAD >/dev/null || die "$dir is already committed: run theme.sh before its first commit.sh"
+command -v hugo >/dev/null && command -v go >/dev/null || die "Hugo and Go are needed to fetch the module"
 
 if [ -n "$local" ]; then
   [ -f "$local/hugo.toml" ] || [ -f "$local/go.mod" ] || die "$local: no Hugo module there"
@@ -43,15 +46,17 @@ if [ -n "$local" ]; then
   esac
 fi
 
-# Import and fetch the module first; put the site back if that fails.
+# Import and fetch the module first; put the site back if anything fails.
 backup=$(mktemp -d)
 cp hugo.toml go.mod "$backup/"
 restore() {
   cp "$backup/hugo.toml" "$backup/go.mod" .
   rm -rf go.sum config/development "$backup"
   rmdir config 2>/dev/null || :
-  die "could not fetch $module: is it published (pushed, and public)? The site is unchanged."
+  echo "theme: could not import $module (see above: is it published, pushed and public?). The site is unchanged." >&2
 }
+trap 'restore' EXIT
+trap 'exit 1' INT TERM
 printf "  [[module.imports]]\n    path = '%s'\n" "$module" >>hugo.toml
 if [ -n "$local" ]; then
   mkdir -p config/development
@@ -65,8 +70,9 @@ fi
 # The production environment ignores the replacement: go.mod and go.sum
 # pin the published module. hugo mod get hands its flags to go get, hence
 # HUGO_ENVIRONMENT rather than --environment.
-HUGO_ENVIRONMENT=production hugo mod get "$module" || restore
-HUGO_ENVIRONMENT=production hugo mod tidy || restore
+HUGO_ENVIRONMENT=production hugo mod get "$module"
+HUGO_ENVIRONMENT=production hugo mod tidy
+trap - EXIT INT TERM
 rm -rf "$backup"
 
 # The module brings the layouts, the CSS, the JS and the static files.

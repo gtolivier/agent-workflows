@@ -57,14 +57,15 @@ hugo_matches() {
   }
 }
 
-# The module path: the remote without its scheme, user and ".git"
+# The module path: the remote without its scheme, user, port and ".git"
 # (github.com/owner/name), else the name alone.
 hugo_module_path() {
   if [ -z "${REMOTE-}" ]; then
     printf '%s\n' "$NAME"
   else
     printf '%s\n' "$REMOTE" |
-      sed -E 's#^[a-z+]+://##; s#^[^@/]*@##; s#^([^/:]+):#\1/#; s#\.git$##'
+      sed -E 's#^([a-z+]+://([^@/]*@)?[^/:]+):[0-9]+/#\1/#; s#^[a-z+]+://##; s#^[^@/]*@##
+        s#^([^/:]+):#\1/#; s#/$##; s#\.git$##'
   fi
 }
 

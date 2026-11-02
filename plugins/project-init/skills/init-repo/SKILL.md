@@ -62,7 +62,8 @@ folder starting with `_` holds code the stacks share, not a stack.
      major version, at a release Angular supports, such as 24.15 or later;
      hugo and hugo-theme: the oldest Hugo supported, default the latest
      release, minimum 0.158.0 — the Hugo on `PATH` must be that version or
-     later, with Go; Node gets the latest LTS).
+     later, with Go: if it is older than the latest, ask whether to
+     upgrade it or to take its version; Node gets the latest LTS).
    - **Hugo site: its theme in the site or beside it.** In the site, the
      theme is the site's own `layouts/` and `assets/`: one `hugo`
      repository. Beside it, the theme is a `hugo-theme` repository the

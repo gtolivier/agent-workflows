@@ -23,7 +23,7 @@
   plain JavaScript in `assets/`, bundled by Hugo (`css.Build`,
   `js.Build`); no Sass, no npm bundler.
 - **Accessibility:** WCAG 2.2 AA. `e2e/accessibility.spec.ts` runs axe on
-  each page: add a test there for every new page or state of a page.
+  the home page: add a test there for every new page or state of a page.
 - **Supported versions:** Hugo @RUNTIME@ and later, standard edition —
   keep `min` under `[module.hugoVersion]` in `hugo.toml` and the CI's
   `HUGO_VERSION` in sync. Node: the major version in `.nvmrc`, which the
