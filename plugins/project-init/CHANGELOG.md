@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.5.0](https://github.com/gtolivier/agent-workflows/compare/project-init-v0.4.0...project-init-v0.5.0) (2026-11-02)
+
+
+### Features
+
+* **project-init:** add the angular stack ([#40](https://github.com/gtolivier/agent-workflows/issues/40)) ([489b2d3](https://github.com/gtolivier/agent-workflows/commit/489b2d341abf10acf5e9c9bea7284c5969e67c14))
+
 ## [0.4.0](https://github.com/gtolivier/agent-workflows/compare/project-init-v0.3.0...project-init-v0.4.0) (2026-11-02)
 
 
