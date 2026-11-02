@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.0](https://github.com/gtolivier/agent-workflows/compare/project-init-v0.3.0...project-init-v0.4.0) (2026-11-02)
+
+
+### Features
+
+* **project-init:** add the django stack ([#36](https://github.com/gtolivier/agent-workflows/issues/36)) ([76643ab](https://github.com/gtolivier/agent-workflows/commit/76643ab5f75038da13956de34abf6ffecb34e889))
+
 ## [0.3.0](https://github.com/gtolivier/agent-workflows/compare/project-init-v0.2.0...project-init-v0.3.0) (2026-11-02)
 
 
