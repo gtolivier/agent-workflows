@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.7.0](https://github.com/gtolivier/agent-workflows/compare/project-init-v0.6.0...project-init-v0.7.0) (2026-11-03)
+
+
+### Features
+
+* **project-init:** add the upgrade skill ([#56](https://github.com/gtolivier/agent-workflows/issues/56)) ([625dd19](https://github.com/gtolivier/agent-workflows/commit/625dd190e11d70664d1a6ac5238c96d724096023))
+
 ## [0.6.0](https://github.com/gtolivier/agent-workflows/compare/project-init-v0.5.0...project-init-v0.6.0) (2026-11-02)
 
 
