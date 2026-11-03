@@ -197,7 +197,14 @@ history. It works on a new folder or on one that already holds
 repositories. `.claude/settings.local.json` — never committed — denies
 the commands that read or change credentials and, on GitHub, makes git
 authenticate with `gh`: add your own `GH_TOKEN` under `"env"`, for the
-Claude Code sessions started at the workspace's root.
+Claude Code sessions started at the workspace's root. Make it a
+fine-grained token limited to the workspace's repositories:
+`scripts/token-url.sh` prints a link to GitHub's form, pre-filled with
+its name, owner, 90 days of validity and permissions (contents, pull
+requests, issues and workflows to write, actions and commit statuses to
+read), and the repositories to tick, which a link cannot select. The
+session can read the token: it can do what these permissions allow on
+those repositories, nothing more.
 
 **`init-repo <stack>`: a new repository.** The stack's generator writes
 the project — `python`: a library, `uv init --lib` with pytest, ruff and

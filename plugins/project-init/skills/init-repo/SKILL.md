@@ -109,6 +109,10 @@ folder starting with `_` holds code the stacks share, not a stack.
    sets its protections. A repository that will use release-please needs
    a blank squash body: before that, set `squash-body: blank` under
    `host` in `.project-init.yml`.
+   In a workspace, once the repository exists on GitHub, run the
+   init-workspace skill's `scripts/token-url.sh <workspace-dir>` and give
+   the user what it prints: the workspace's token reaches only the
+   repositories ticked on it, so they add this one to it.
 6. Report the stack, the choices, the commit, and the next step.
 
 ## Test-driven development later
