@@ -53,7 +53,9 @@ the user's, on one line:
    repository moves to a new branch, `project-init/upgrade-<version>`; a
    workspace stays on its branch. The version in the register comes from
    Claude Code's plugin cache, else is downloaded from its release on
-   GitHub. It commits nothing, and prints a report:
+   GitHub with `gh`: gtolivier/agent-workflows is private, so the `gh`
+   login must be able to read it — otherwise, pass `--base`. It commits
+   nothing, and prints a report:
 
    | Outcome | Means | To settle |
    |---|---|---|
