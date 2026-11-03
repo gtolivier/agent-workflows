@@ -126,18 +126,11 @@ hugo_tooling() {
     stylelint stylelint-config-standard typescript@~6.0 typescript-eslint
   npx playwright install chromium
   playwright_config
-  mkdir -p e2e
-  cp "$NODE_DIR/accessibility.spec.ts" e2e/accessibility.spec.ts
+  stack_render .
 
   # TypeScript checks the end-to-end tests and playwright.config.ts.
   npx tsc --init --types node --noEmit --sourceMap false --declaration false \
     --declarationMap false >/dev/null
-  # No CLI writes an ESLint flat config without asking: the template is
-  # written here, then gets the clean-code rules.
-  cp "$HUGO_DIR/eslint.config.mjs" eslint.config.mjs
-  eslint_rules eslint.config.mjs
-  # Go templates and the register are not Prettier's.
-  printf '%s\n' .project-init.yml layouts/ archetypes/ >.prettierignore
   npm pkg set prettier.singleQuote=true --json
   npm pkg set stylelint.extends=stylelint-config-standard
 
@@ -156,6 +149,20 @@ hugo_tooling() {
   npx stylelint 'assets/**/*.css' --fix --allow-empty-input
   npx prettier --write --log-level warn .
 }
+
+# The files copied from the templates into the folder $1: run again by the
+# upgrade skill, for the version that set a repository up and for this one.
+stack_render() {
+  copy_file "$(template accessibility.spec.ts)" "$1/e2e/accessibility.spec.ts"
+  # No CLI writes an ESLint flat config without asking: the template is
+  # written here, then gets the clean-code rules.
+  copy_file "$HUGO_DIR/eslint.config.mjs" "$1/eslint.config.mjs"
+  [ ! -f "$1/eslint.config.mjs" ] || eslint_rules "$1/eslint.config.mjs"
+  # Go templates and the register are not Prettier's.
+  printf '%s\n' .project-init.yml layouts/ archetypes/ >"$1/.prettierignore"
+}
+# The rendered files in $1, formatted by the site's Prettier.
+stack_format() { format_prettier "$1"; }
 
 # Playwright's generated config: tests in e2e/, on Chromium and a phone,
 # against the production build hugo server holds in memory.

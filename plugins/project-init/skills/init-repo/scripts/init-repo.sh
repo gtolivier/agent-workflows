@@ -28,27 +28,7 @@ die() {
   exit 1
 }
 
-# Replace each @VAR@ of a template with the environment variable VAR.
-render() {
-  awk '{
-    out = ""; s = $0
-    while (match(s, /@[A-Z_]+@/)) {
-      out = out substr(s, 1, RSTART - 1) ENVIRON[substr(s, RSTART + 1, RLENGTH - 2)]
-      s = substr(s, RSTART + RLENGTH)
-    }
-    print out s
-  }' "$1"
-}
-
-# A string as a YAML scalar: a JSON string is one.
-q() { jq -Rn --arg s "$1" '$s'; }
-
-lang_name() {
-  case $1 in
-    en) echo English ;; fr) echo French ;; de) echo German ;;
-    es) echo Spanish ;; it) echo Italian ;; *) echo "$1" ;;
-  esac
-}
+. "$here/lib.sh"
 
 [ $# -ge 2 ] || usage
 stack=$1 dir=$2
@@ -241,63 +221,38 @@ if [ "$roadmap_place" = repos ] && [ ! -f ROADMAP.md ]; then
   printf '# Roadmap\n' >ROADMAP.md
 fi
 
-# A stack's template: in its folder, else in the folder of shared code it
-# names, SHARED_DIR.
-template() {
-  if [ -f "$stack_dir/$1" ] || [ -z "${SHARED_DIR-}" ]; then
-    echo "$stack_dir/$1"
-  else
-    echo "$SHARED_DIR/$1"
-  fi
-}
-STACK_SECTIONS=$(render "$(template agents.md)")
-STACK_RULES=$(render "$(template rules.md)")
-LANGUAGE_RULE="code, comments, documentation, commit messages and issues in English; pull requests and their comments in $(lang_name "$pr_lang"); the roadmap in $(lang_name "$roadmap_lang")."
-export STACK_SECTIONS STACK_RULES LANGUAGE_RULE
-render "$skill/assets/AGENTS.md" >AGENTS.md
-
-if [ "$host" = github ]; then
-  mkdir -p .github/workflows
-  render "$(template ci.yml)" >.github/workflows/ci.yml
-  managed="$managed .github/workflows/ci.yml"
-  if [ "$coderabbit" = true ]; then
-    cp "$skill/assets/coderabbit.yaml" .coderabbit.yaml
-    managed="$managed .coderabbit.yaml"
-  fi
-fi
 [ -z "$remote" ] || git remote add origin "$remote"
 
-version=$(jq -r .version "$skill/../../.claude-plugin/plugin.json" 2>/dev/null || echo unknown)
-yaml_list() { printf '%s\n' "$@" | jq -R . | jq -sc .; }
+# The register, then the files of the common layer it describes: AGENTS.md
+# (with the Test-first rule when TDD is on), the CI and CodeRabbit's
+# settings on GitHub, and the files the stack renders. render.sh writes
+# them as the upgrade skill renders them again later.
 checks='[]'
-[ "$host" = github ] && checks=$(stack_checks | jq -R . | jq -sc .)
-{
-  echo "# project-init register: the version that set this repository up, the"
-  echo "# choices made, and the files it manages. Read by project-init's scripts;"
-  echo "# record deviations from the common layer under \"deviations\"."
-  echo "project-init: $(q "$version")"
-  echo "kind: repo"
-  echo "stack: $(q "$stack")"
-  echo "description: $(q "$description")"
-  echo "choices:"
-  echo "  visibility: $(q "$visibility")"
-  echo "  license: $(q "$license")"
-  echo "  runtime: $(q "$runtime")"
-  echo "  language: {prs: $(q "$pr_lang"), roadmap: $(q "$roadmap_lang")}"
-  echo "  roadmap: $(q "$roadmap_place")"
-  echo "  coderabbit: $coderabbit"
-  echo "  tdd: false"
-  echo "host:"
-  echo "  kind: $(q "$host")"
-  echo "  repo: $(q "$github_repo")"
-  echo "  remote: $(q "$remote")"
-  echo "  required-checks: $checks"
-  echo "  squash-body: commit-messages"
-  # shellcheck disable=SC2086 # word splitting wanted: one path per word
-  echo "managed: $(yaml_list $managed $(stack_managed))"
-  echo "deviations: []"
-} >.project-init.yml
-[ "$tdd" = off ] || sh "$here/tdd.sh" on . >/dev/null
+if [ "$host" = github ]; then
+  managed="$managed .github/workflows/ci.yml"
+  [ "$coderabbit" != true ] || managed="$managed .coderabbit.yaml"
+  checks=$({ stack_checks; echo gitleaks; } | jq -R . | jq -sc .)
+fi
+# shellcheck disable=SC2086 # word splitting wanted: one path per word
+managed=$(printf '%s\n' $managed $(stack_managed) | jq -R . | jq -sc .)
+version=$(jq -r .version "$skill/../../.claude-plugin/plugin.json" 2>/dev/null || echo unknown)
+register=$(jq -n --arg version "$version" --arg name "$name" --arg stack "$stack" \
+  --arg description "$description" --arg visibility "$visibility" --arg license "$license" \
+  --arg runtime "$runtime" --arg prs "$pr_lang" --arg roadmap_lang "$roadmap_lang" \
+  --arg roadmap "$roadmap_place" --argjson coderabbit "$coderabbit" --arg tdd "$tdd" \
+  --arg host "$host" --arg repo "$github_repo" --arg remote "$remote" \
+  --argjson checks "$checks" --argjson managed "$managed" '{
+    "project-init": $version, kind: "repo", name: $name, stack: $stack,
+    description: $description,
+    choices: {visibility: $visibility, license: $license, runtime: $runtime,
+      language: {prs: $prs, roadmap: $roadmap_lang}, roadmap: $roadmap,
+      coderabbit: $coderabbit, tdd: ($tdd == "on")},
+    host: {kind: $host, repo: $repo, remote: $remote, "required-checks": $checks,
+      "squash-body": "commit-messages"},
+    managed: $managed, deviations: []
+  }')
+uv run --quiet --script "$here/register-edit.py" .project-init.yml load "$register"
+sh "$here/render.sh" . .
 
 echo
 echo "Created $dir ($stack, host $host, license $license, TDD $tdd)."

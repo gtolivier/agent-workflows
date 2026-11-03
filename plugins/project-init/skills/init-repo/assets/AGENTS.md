@@ -13,9 +13,12 @@ Instructions for coding agents working in this repository. Read
   set this repository up. `.project-init.yml` records its version, the
   choices made and the files it manages (`managed`). At the end of a pull
   request that changes one of those files, ask the user whether to record
-  the change under `deviations`, with its path, reason and status:
-  `generalize` (worth bringing to project-init: also open an issue there),
-  `local` (kept here only), `temporary` (removed later: say when in
-  `until`) or `abandon` (project-init no longer manages that file here).
+  the change as a deviation, with its reason and status: `generalize`
+  (worth bringing to project-init: open an issue in
+  gtolivier/agent-workflows and record its number), `local` (kept here
+  only), `temporary` (kept until a date, YYYY-MM-DD) or `abandon`
+  (project-init no longer manages that file here). The upgrade skill of
+  project-init records it (`deviation.sh`), keeps it through upgrades and
+  asks again once its date or its issue says so.
 - **No `CLAUDE.md`:** this file is the single source of agent instructions.
   A `CLAUDE.md` next to it would make Claude Code ignore it.

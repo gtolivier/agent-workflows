@@ -28,7 +28,9 @@
 
 Written by `ng new --ai-config` for this version of Angular.
 
+<!-- project-init:angular-practices -->
 @ANGULAR_PRACTICES@
+<!-- /project-init:angular-practices -->
 
 ## Test-driven development
 

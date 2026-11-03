@@ -12,6 +12,8 @@
 #             workspace) or absolute
 set -eu
 
+here=$(cd "$(dirname "$0")" && pwd)
+
 die() {
   echo "theme: $*" >&2
   exit 1
@@ -74,6 +76,14 @@ HUGO_ENVIRONMENT=production hugo mod get "$module"
 HUGO_ENVIRONMENT=production hugo mod tidy
 trap - EXIT INT TERM
 rm -rf "$backup"
+
+# The register: the files the import added, and the theme, for an upgrade.
+set --
+[ ! -f go.sum ] || set -- add managed '"go.sum"'
+[ -z "$local" ] || set -- "$@" add managed '"config/development/hugo.toml"'
+theme=$(jq -nc --arg module "$module" --arg local "$local" \
+  '{module: $module} + (if $local == "" then {} else {local: $local} end)')
+uv run --quiet --script "$here/../../scripts/register-edit.py" .project-init.yml "$@" set choices.theme "$theme"
 
 # The module brings the layouts, the CSS, the JS and the static files.
 rm -rf layouts assets static

@@ -9,6 +9,11 @@ on:
 permissions:
   contents: read
 
+# A new push to a branch cancels its run still going.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
 # The settings come from the environment (.env is not committed). The
 # typecheck job needs them too: django-stubs loads the settings. The key is
 # a placeholder, not a secret: the CI serves nothing.
@@ -17,6 +22,26 @@ env:
   DATABASE_URL: postgres://postgres:postgres@localhost:5432/@DB_NAME@
 
 jobs:
+  # Secrets in the whole history, with gitleaks' own image: the hooks of
+  # init-machine check each commit on the machine, this check what reaches
+  # GitHub from anywhere.
+  gitleaks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: docker://ghcr.io/gitleaks/gitleaks:v8.30.1
+        # The checkout is the runner's user's, the container runs as root:
+        # git refuses the repository, and gitleaks then scans no commit and
+        # passes. The image's safe.directory is lost: GitHub sets HOME.
+        env:
+          GIT_CONFIG_COUNT: 1
+          GIT_CONFIG_KEY_0: safe.directory
+          GIT_CONFIG_VALUE_0: /github/workspace
+        with:
+          args: git --redact --verbose --no-banner
+
   lint:
     runs-on: ubuntu-latest
     steps:
