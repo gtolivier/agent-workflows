@@ -111,10 +111,11 @@ fi
 
 # The workspace above, if any: its choices are the defaults.
 parent=$(cd "$(dirname "$dir")" 2>/dev/null && pwd) || parent=''
-roadmap_place=repos
+roadmap_place=repos in_workspace=false
 if [ -n "$parent" ] && [ -f "$parent/.project-init.yml" ]; then
   ws=$(uv run --quiet --script "$here/register.py" "$parent/.project-init.yml")
   if [ "$(printf '%s' "$ws" | jq -r .kind)" = workspace ]; then
+    in_workspace=true
     [ -n "$owner" ] || owner=$(printf '%s' "$ws" | jq -r '.host.owner // empty')
     # A public repository speaks English unless asked otherwise.
     if [ "$visibility" != public ]; then
@@ -196,6 +197,23 @@ if [ ! -f .gitignore ]; then
   printf '%s' "$template" | jq -er .source >.gitignore
 fi
 grep -qxF .DS_Store .gitignore || printf '\n# macOS\n.DS_Store\n' >>.gitignore
+grep -qxF .claude/settings.local.json .gitignore ||
+  printf '\n# Claude Code, this machine only: may hold a token\n.claude/settings.local.json\n' >>.gitignore
+
+# On its own, the repository is where Claude Code sessions start: their
+# local settings deny the commands that read or change credentials and, on
+# GitHub, make git authenticate with gh. In a workspace, the workspace's
+# settings do.
+if [ "$in_workspace" = false ] && [ ! -e .claude/settings.local.json ]; then
+  mkdir -p .claude
+  if [ "$host" = github ]; then
+    cp "$skill/assets/settings.local.json" .claude/settings.local.json
+  else
+    jq 'del(.env)' "$skill/assets/settings.local.json" >.claude/settings.local.json
+  fi
+  # The user adds a token to it: readable by them only.
+  chmod 600 .claude/settings.local.json
+fi
 
 if [ "$license" != none ]; then
   printf '%s' "$license_json" | jq -r .body |

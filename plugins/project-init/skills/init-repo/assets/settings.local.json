@@ -1,0 +1,18 @@
+{
+  "env": {
+    "GIT_CONFIG_COUNT": "2",
+    "GIT_CONFIG_KEY_0": "credential.https://github.com.helper",
+    "GIT_CONFIG_VALUE_0": "",
+    "GIT_CONFIG_KEY_1": "credential.https://github.com.helper",
+    "GIT_CONFIG_VALUE_1": "!gh auth git-credential"
+  },
+  "permissions": {
+    "deny": [
+      "Bash(gh auth *)",
+      "Bash(gh repo delete *)",
+      "Bash(security *)",
+      "Bash(git credential *)",
+      "Bash(git credential-osxkeychain *)"
+    ]
+  }
+}
