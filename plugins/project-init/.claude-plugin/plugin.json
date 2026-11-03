@@ -1,7 +1,7 @@
 {
   "$schema": "https://anthropic.com/claude-code/plugin.schema.json",
   "name": "project-init",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "description": "Set up a machine, a workspace and its repositories with a common layer: git hooks that block secrets, a workspace AGENTS.md over its repositories, new repositories from their stack's generator with license, CI and test-first rules, and GitHub settings.",
   "author": {
     "name": "Olivier Charvoz"
