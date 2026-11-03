@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.8.0](https://github.com/gtolivier/agent-workflows/compare/project-init-v0.7.0...project-init-v0.8.0) (2026-11-03)
+
+
+### Features
+
+* **project-init:** link to a pre-filled fine-grained token for a workspace ([#60](https://github.com/gtolivier/agent-workflows/issues/60)) ([ac4f939](https://github.com/gtolivier/agent-workflows/commit/ac4f939477831a1cfcf3926c6bd68e32ca3d7c80))
+
 ## [0.7.0](https://github.com/gtolivier/agent-workflows/compare/project-init-v0.6.0...project-init-v0.7.0) (2026-11-03)
 
 
