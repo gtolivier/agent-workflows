@@ -36,7 +36,8 @@ $pending"
 markers=$(jq -r '.items[].path' "$report" | while IFS= read -r path; do
   [ ! -f "$path" ] || ! grep -Eq '^(<<<<<<< this repository|>>>>>>> project-init [0-9.]+)$' "$path" || echo "$path"
 done)
-[ -z "$markers" ] || die "conflict markers left in: $(echo $markers)"
+[ -z "$markers" ] || die "conflict markers left in:
+$markers"
 sh "$here/deviation.sh" "$dir" check
 
 to=$(jq -r .to "$report")

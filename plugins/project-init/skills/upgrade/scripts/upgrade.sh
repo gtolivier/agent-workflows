@@ -71,7 +71,7 @@ to=$(jq -r .version "$plugin/.claude-plugin/plugin.json")
 printf '%s' "$from" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$' ||
   die "$dir/.project-init.yml: project-init '$from' is not a version"
 work=$(cd "$(git rev-parse --git-dir)" && pwd)/project-init-upgrade
-[ ! -e "$work" ] || die "an upgrade is in progress in $dir: finish it with finish.sh, or discard it (git reset --hard, git switch back, rm -rf $work)"
+[ ! -e "$work" ] || die "an upgrade is in progress in $dir: finish it with finish.sh, or discard it (git reset --hard, git clean -fd, git switch back, delete the upgrade branch, rm -rf $work)"
 git rev-parse -q --verify HEAD >/dev/null || die "$dir has no commit yet: run init-repo's commit.sh first"
 [ -z "$(git status --porcelain)" ] || die "$dir has uncommitted changes: commit or stash them first"
 if [ "$from" = "$to" ]; then
@@ -82,8 +82,23 @@ fi
 older() { [ "$1" != "$2" ] && [ "$(printf '%s\n%s\n' "$1" "$2" | sort -V | head -n 1)" = "$1" ]; }
 older "$from" "$to" || die "$dir was set up by project-init $from, newer than this one ($to): update the plugin"
 
+# On a failure, put the folder back as it was: its tree was clean, so
+# nothing of the user's is lost.
+start=$(git branch --show-current)
+[ -n "$start" ] || start=$(git rev-parse HEAD)
+branch=''
+rollback() {
+  rm -rf "$work"
+  git reset --quiet --hard
+  git clean --quiet -fd
+  if [ -n "$branch" ] && [ "$(git branch --show-current)" = "$branch" ]; then
+    git -c advice.detachedHead=false checkout --quiet "$start"
+    git branch --quiet -D "$branch"
+  fi
+  echo "upgrade: failed; $dir is back as it was" >&2
+}
 mkdir -p "$work"
-trap 'rm -rf "$work"; echo "upgrade: failed; to put $dir back: git reset --hard, then git switch to your branch" >&2' EXIT
+trap rollback EXIT
 
 # The plugin of the version in the register: next to this one in Claude
 # Code's cache, else its release on GitHub.
@@ -105,9 +120,10 @@ fi
 [ -d "$base_plugin/skills/$skill_name" ] || die "$base_plugin has no $skill_name skill"
 
 if [ "$kind" = repo ]; then
+  ! git rev-parse -q --verify "refs/heads/project-init/upgrade-$to" >/dev/null ||
+    die "branch project-init/upgrade-$to already exists: delete it, or finish the upgrade on it"
+  git switch --quiet --create "project-init/upgrade-$to"
   branch=project-init/upgrade-$to
-  ! git rev-parse -q --verify "refs/heads/$branch" >/dev/null || die "branch $branch already exists"
-  git switch --quiet --create "$branch"
 fi
 echo "Upgrading $dir from project-init $from to $to:"
 
@@ -182,12 +198,11 @@ while IFS= read -r path <&3; do
     continue
   fi
   if [ ! -f "$t" ]; then
-    if [ ! -e "$path" ]; then
+    if [ ! -e "$path" ] || { [ -f "$b" ] && cmp -s "$path" "$b"; }; then
+      rm -f "$path"
       set -- "$@" remove managed "$(json "$path")"
-    elif [ -f "$b" ] && cmp -s "$path" "$b"; then
-      rm "$path"
-      set -- "$@" remove managed "$(json "$path")"
-      item deleted
+      [ -z "$status" ] || set -- "$@" deviation "$path" null
+      item deleted "${status:+its $status deviation goes too}"
     else
       item removed "changed here: delete it, or keep it as the repository's own"
     fi

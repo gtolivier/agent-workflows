@@ -86,9 +86,10 @@ the user's, on one line:
 6. Report the versions, each file's outcome, the deviations recorded, the
    commit and the next step.
 
-To give up an upgrade in progress: `git reset --hard`, `git switch` back
-to the earlier branch, delete `project-init/upgrade-<version>` and
-`.git/project-init-upgrade`.
+When `upgrade.sh` fails, it puts the folder back as it was. To give up
+an upgrade in progress: `git reset --hard`, `git clean -fd` (the files it
+created), `git switch` back to the earlier branch, delete
+`project-init/upgrade-<version>` and `.git/project-init-upgrade`.
 
 ## A deviation at the end of a pull request
 
