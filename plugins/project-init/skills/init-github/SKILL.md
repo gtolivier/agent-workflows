@@ -46,11 +46,12 @@ script says so and goes on.
    workspace, or the repository on its own; a repository in a workspace
    gives the workspace's token, which must now reach it too. Give the
    user what it prints: a link to GitHub's token form, pre-filled with
-   the name, owner, 90 days of validity and the permissions (contents,
-   pull requests, issues and workflows to write, actions and commit
-   statuses to read), and the repositories to tick — a link cannot
-   select them. They paste the token into `.claude/settings.local.json`,
-   under `"env"`, as `"GH_TOKEN"`: init-workspace and init-repo create
+   the name (`Claude Code - <name>`), owner, 90 days of validity and
+   the permissions (contents, pull requests, issues and workflows to
+   write, actions and commit statuses to read), and the repositories to
+   tick — a link cannot select them. They paste the token into
+   `.claude/settings.local.json`, under `"env"`, as `"GH_TOKEN"`:
+   init-workspace and init-repo create
    that file, never committed; git and `gh` then authenticate with it.
    Tell them the session can read the token, so it can do on those
    repositories what these permissions allow, nothing more; an

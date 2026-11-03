@@ -237,10 +237,11 @@ force push) and, when public, push protection. Run it with your own `gh`
 login in a normal terminal; `--dry-run` shows what it would do. Rulesets
 on a private repository need GitHub Pro. Then `token-url.sh <dir>` prints
 a link to GitHub's form for a fine-grained token limited to a workspace's
-repositories, or to a repository on its own, pre-filled with its name,
-owner, 90 days of validity and permissions (contents, pull requests,
-issues and workflows to write, actions and commit statuses to read), and
-the repositories to tick, which a link cannot select. The token goes in
+repositories, or to a repository on its own, pre-filled with its name
+(`Claude Code - <name>`), owner, 90 days of validity and permissions
+(contents, pull requests, issues and workflows to write, actions and
+commit statuses to read), and the repositories to tick, which a link
+cannot select. The token goes in
 `.claude/settings.local.json`, under `"env"`, as `GH_TOKEN`. The session
 can read it: it can do what these permissions allow on those
 repositories, nothing more.

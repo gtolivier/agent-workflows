@@ -83,11 +83,10 @@ others=$(printf '%s\n' "$repos" | grep -v "^$owner/" || true)
 mine=$(printf '%s\n' "$repos" | grep "^$owner/" | cut -d/ -f2)
 [ -n "$mine" ] || die "no repository of $owner on GitHub in $dir"
 
-list=$(printf '%s\n' "$mine" | paste -sd, - | sed 's/,/, /g')
-token_name=$(printf 'claude-%s' "$name" | cut -c1-40)
-description=$(printf 'Claude Code sessions started in %s. Repository access: Only select repositories, then tick: %s.' "$what" "$list" | cut -c1-1024)
-query=$(jq -rn --arg name "$token_name" --arg description "$description" --arg owner "$owner" '
-  [["name", $name], ["description", $description], ["target_name", $owner],
+# GitHub caps a token's name at 40 characters.
+token_name=$(printf 'Claude Code - %s' "$name" | cut -c1-40)
+query=$(jq -rn --arg name "$token_name" --arg owner "$owner" '
+  [["name", $name], ["target_name", $owner],
    ["expires_in", "90"],
    ["contents", "write"], ["pull_requests", "write"], ["issues", "write"],
    ["workflows", "write"], ["actions", "read"], ["statuses", "read"]]
@@ -114,5 +113,5 @@ if [ ! -f "$settings" ]; then
     echo "That file is missing: create it as {\"env\": {\"GH_TOKEN\": \"<token>\"}}, and keep it out of git."
   fi
 fi
-echo "Already have $token_name? Edit it at https://github.com/settings/personal-access-tokens"
+echo "Already have \"$token_name\"? Edit it at https://github.com/settings/personal-access-tokens"
 echo "and tick the repositories above that it misses."
