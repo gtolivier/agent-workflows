@@ -1,6 +1,7 @@
 #!/bin/sh
 # Make the first commit of a repository set up by init-repo.sh: refuses
-# while a TODO(project-init) placeholder remains or a stack check fails.
+# while a TODO(project-init) placeholder remains or a stack check fails, or
+# when the commit would take in .claude/settings.local.json.
 # In a workspace, then updates the workspace's list of repositories and
 # commits it there.
 #
@@ -39,6 +40,10 @@ echo "Running the $stack checks..."
 stack_check || die "a check failed: fix it, then run commit.sh again"
 
 git add --all
+if git diff --cached --name-only | grep -qx '.claude/settings.local.json'; then
+  git reset --quiet
+  die ".claude/settings.local.json would be committed — the .gitignore must ignore it"
+fi
 if git diff --cached --quiet; then
   echo "Nothing to commit in $dir."
 else

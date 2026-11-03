@@ -25,7 +25,10 @@ The files project-init renders from its templates: `AGENTS.md`, the CI,
 `.gitignore`. The files a generator wrote (`package.json`, `pyproject.toml`,
 `go.mod`, `hugo.toml`…) stay the repository's: no upgrade rewrites them.
 Before rendering, the migrations of each version in between update the
-register (`migrations/`).
+register (`migrations/`). Since 0.9.0, a repository's `.gitignore`
+ignores `.claude/settings.local.json`, and a repository on its own gets
+that file — never committed — as init-repo writes it: the upgrade adds
+both when missing.
 
 ## Deviations
 
@@ -84,7 +87,10 @@ the user's, on one line:
    `setup-github.sh <dir>` again, in a normal terminal, once the pull
    request is merged.
 6. Report the versions, each file's outcome, the deviations recorded, the
-   commit and the next step.
+   commit and the next step. When the upgrade created
+   `.claude/settings.local.json` in a repository on GitHub, give the link
+   to its token too: init-github's `scripts/token-url.sh <dir>`, as that
+   skill's last step says.
 
 When `upgrade.sh` fails, it puts the folder back as it was. To give up
 an upgrade in progress: `git reset --hard`, `git clean -fd` (the files it

@@ -27,7 +27,7 @@ folder starting with `_` holds code the stacks share, not a stack.
 
 | File | Content |
 |---|---|
-| `.gitignore` | the generator's, else GitHub's template for the stack |
+| `.gitignore` | the generator's, else GitHub's template for the stack, ignoring `.claude/settings.local.json` too |
 | `LICENSE` | the chosen license's text from GitHub, with the year and `git config user.name` |
 | `README.md` | the name and description, and a paragraph for you to write |
 | `ROADMAP.md` | unless the workspace keeps the roadmap |
@@ -37,6 +37,7 @@ folder starting with `_` holds code the stacks share, not a stack.
 | `compose.yaml`, `.env.example`, `.env` | django: the local PostgreSQL, and the settings that differ between environments — `.env`, ignored by git, gets a secret key of its own |
 | `.nvmrc`, `.prettierignore`, `e2e/` | angular, hugo, hugo-theme: the Node major version, which the CI reads; the register (and for Hugo the Go templates), left out of Prettier; an accessibility test of the home page with axe |
 | `go.mod`, `exampleSite/` | hugo, hugo-theme: the Hugo module, its path from the remote (`github.com/<owner>/<name>`), else the name; hugo-theme: the demo site, which imports the theme from the repository |
+| `.claude/settings.local.json` | on its own, not in a workspace — whose settings serve its sessions: never committed; denies the commands that read or change credentials; on GitHub, makes git authenticate with `gh` |
 | `.project-init.yml` | the register: project-init's version, the choices, the CI checks to require, the files it manages, the deviations |
 
 ## Steps
@@ -101,18 +102,18 @@ folder starting with `_` holds code the stacks share, not a stack.
    own on port 4200; hugo and hugo-theme: they use port 1314, which must
    be free. Then run
    `scripts/commit.sh <dir>`.
-   It refuses while a placeholder remains
-   or a stack check fails, then makes the first commit on `main`. In a
+   It refuses while a placeholder remains, a stack check fails or the
+   commit would take in `.claude/settings.local.json`, then makes the
+   first commit on `main`. In a
    workspace, it also adds the repository to the workspace's list and
    commits that there.
-5. On GitHub: the init-github skill creates the repository, pushes and
-   sets its protections. A repository that will use release-please needs
-   a blank squash body: before that, set `squash-body: blank` under
-   `host` in `.project-init.yml`.
-   In a workspace, once the repository exists on GitHub, run the
-   init-workspace skill's `scripts/token-url.sh <workspace-dir>` and give
-   the user what it prints: the workspace's token reaches only the
-   repositories ticked on it, so they add this one to it.
+5. On GitHub: the init-github skill creates the repository, pushes, sets
+   its protections, then gives the link to the token for Claude Code's
+   sessions: on its own, a token for this repository, pasted into its
+   `.claude/settings.local.json`; in a workspace, the workspace's token,
+   which must now reach this repository too. A repository that will use
+   release-please needs a blank squash body: before that, set
+   `squash-body: blank` under `host` in `.project-init.yml`.
 6. Report the stack, the choices, the commit, and the next step.
 
 ## Test-driven development later

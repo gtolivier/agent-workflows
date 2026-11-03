@@ -1,9 +1,10 @@
 #!/bin/sh
 # Finish the upgrade in progress in a repository or workspace: refuses
 # while a file of the report is unsettled or holds conflict markers, or a
-# deviation is malformed, or (in a repository) a stack check fails. Then
-# sets the register to the new version and commits — on the upgrade's
-# branch in a repository, on the current branch in a workspace.
+# deviation is malformed, or (in a repository) a stack check fails, or the
+# commit would take in .claude/settings.local.json. Then sets the register
+# to the new version and commits — on the upgrade's branch in a
+# repository, on the current branch in a workspace.
 #
 # Usage: finish.sh <dir> [--no-check]
 #
@@ -59,6 +60,10 @@ uv run --quiet --script "$here/register-edit.py" .project-init.yml set project-i
 # A workspace's list of repositories, as its commit.sh keeps it.
 [ "$kind" != workspace ] || sh "$plugin/skills/init-workspace/scripts/repos.sh" "$dir"
 git add --all
+if git diff --cached --name-only | grep -qx '.claude/settings.local.json'; then
+  git reset --quiet
+  die ".claude/settings.local.json would be committed — the .gitignore must ignore it"
+fi
 git commit --quiet --message "chore: upgrade project-init to $to"
 rm -rf "$work"
 echo "Committed in $dir: $(git log -1 --format='%h %s')"

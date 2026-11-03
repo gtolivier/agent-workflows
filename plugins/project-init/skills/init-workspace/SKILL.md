@@ -53,20 +53,12 @@ An existing file is kept, never overwritten. A folder that already has a
    the commit would take in a repository or
    `.claude/settings.local.json`, or the `.gitignore` is not an
    allowlist; fix the cause, never the check.
-5. On GitHub: the init-github skill creates the private repository and
-   pushes. For git and `gh` to work from Claude Code sessions started at
-   the workspace's root, the user adds their own token to
-   `.claude/settings.local.json`, under `"env"`, as `"GH_TOKEN"`: a
-   fine-grained token limited to the workspace's repositories. Once the
-   repository exists, run `scripts/token-url.sh <dir>` and give the user
-   what it prints: a link to GitHub's token form, pre-filled with the
-   name, owner, 90 days of validity and the permissions (contents, pull
-   requests, issues and workflows to write, actions and commit statuses
-   to read), and the repositories to tick — a link cannot select them.
-   Tell them the session can read the token, so it can do on those
-   repositories what these permissions allow, nothing more; an
-   organization may have to approve it. Never ask for the token, never
-   read or print that file's values.
+5. On GitHub: the init-github skill creates the private repository,
+   pushes, then gives the link to a fine-grained token limited to the
+   workspace's repositories. The user pastes it into
+   `.claude/settings.local.json`, for git and `gh` to work from Claude
+   Code sessions started at the workspace's root. Never ask for the
+   token, never read or print that file's values.
 6. Report what was created or kept, the commit, and the next step:
    init-repo for each new repository, init-github if it lives on GitHub.
 

@@ -139,7 +139,7 @@ fi
 
 # The migrations of each version after the register's, up to this one.
 checks_before=$(get '.host["required-checks"] // []' | jq -c .)
-export REGISTER_PY="$here/register.py" REGISTER_EDIT_PY="$here/register-edit.py"
+export REGISTER_PY="$here/register.py" REGISTER_EDIT_PY="$here/register-edit.py" PLUGIN_DIR="$plugin"
 for m in $(ls "$here/../migrations" | sort -V); do
   v=${m%%-*}
   older "$from" "$v" && ! older "$to" "$v" || continue

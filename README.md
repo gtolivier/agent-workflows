@@ -197,14 +197,9 @@ history. It works on a new folder or on one that already holds
 repositories. `.claude/settings.local.json` — never committed — denies
 the commands that read or change credentials and, on GitHub, makes git
 authenticate with `gh`: add your own `GH_TOKEN` under `"env"`, for the
-Claude Code sessions started at the workspace's root. Make it a
-fine-grained token limited to the workspace's repositories:
-`scripts/token-url.sh` prints a link to GitHub's form, pre-filled with
-its name, owner, 90 days of validity and permissions (contents, pull
-requests, issues and workflows to write, actions and commit statuses to
-read), and the repositories to tick, which a link cannot select. The
-session can read the token: it can do what these permissions allow on
-those repositories, nothing more.
+Claude Code sessions started at the workspace's root — a fine-grained
+token limited to the workspace's repositories, from the link `init-github`
+gives.
 
 **`init-repo <stack>`: a new repository.** The stack's generator writes
 the project — `python`: a library, `uv init --lib` with pytest, ruff and
@@ -228,9 +223,11 @@ newest supported versions; Angular: unit and end-to-end, and the build;
 Hugo: the strict build, its HTML and links, and end-to-end) and a
 secret scan of the whole history with gitleaks
 — and, for a public repository, CodeRabbit. A
-repository can also live on another host or on this machine only. Its
-`commit.sh` makes the first commit only once no placeholder remains and
-every check passes.
+repository can also live on another host or on this machine only. On its
+own, outside a workspace, it gets the same `.claude/settings.local.json`,
+for the sessions started in it; its `.gitignore` ignores that file. Its
+`commit.sh` makes the first commit only once no placeholder remains,
+every check passes and that file stays out.
 
 **`init-github`: the GitHub side.** `setup-github.sh <dir>...` creates
 the repositories if missing and pushes them; for a repository, it allows
@@ -238,7 +235,15 @@ squash merges only (title = pull request title), deletes merged branches,
 adds a "Protect main" ruleset (pull request and CI checks required, no
 force push) and, when public, push protection. Run it with your own `gh`
 login in a normal terminal; `--dry-run` shows what it would do. Rulesets
-on a private repository need GitHub Pro.
+on a private repository need GitHub Pro. Then `token-url.sh <dir>` prints
+a link to GitHub's form for a fine-grained token limited to a workspace's
+repositories, or to a repository on its own, pre-filled with its name,
+owner, 90 days of validity and permissions (contents, pull requests,
+issues and workflows to write, actions and commit statuses to read), and
+the repositories to tick, which a link cannot select. The token goes in
+`.claude/settings.local.json`, under `"env"`, as `GH_TOKEN`. The session
+can read it: it can do what these permissions allow on those
+repositories, nothing more.
 
 Languages: code, comments, documentation, commits and issues are always
 in English; pull requests, their comments and the roadmap may be in
@@ -255,7 +260,10 @@ other way round. Whatever differs from the common layer is settled with
 you as a deviation, recorded with its reason: `generalize` (an issue
 proposes it to project-init), `local`, `temporary` (until a date) or
 `abandon` (project-init no longer manages the file). Files written by a
-generator (`package.json`, `pyproject.toml`…) are never rewritten.
+generator (`package.json`, `pyproject.toml`…) are never rewritten. The
+upgrade to 0.9.0 gives a repository on its own its
+`.claude/settings.local.json`, and every repository's `.gitignore` the
+line that ignores it.
 
 **`init-machine`: no secret leaves the machine through git.** Ask Claude
 Code to set up the machine (or run the skill's `scripts/install.sh`
