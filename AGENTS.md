@@ -46,5 +46,5 @@ claude --plugin-dir plugins/<name>        # try a plugin without installing it
 - Merge the release pull request right after the plugin change it lists.
   Fresh installs take the plugin from `main`, so merged but unreleased
   changes already ship under the previous version number.
-- Everything in this repository is public and in English.
+- Everything in this repository is private and in English.
 - No `CLAUDE.md`: this file is the only instruction file.

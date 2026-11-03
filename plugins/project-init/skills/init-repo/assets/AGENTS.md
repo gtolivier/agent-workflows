@@ -9,8 +9,8 @@ Instructions for coding agents working in this repository. Read
 
 @STACK_RULES@
 - **Language:** @LANGUAGE_RULE@
-- **Common layer:** [project-init](https://github.com/gtolivier/agent-workflows)
-  set this repository up. `.project-init.yml` records its version, the
+- **Common layer:** project-init set this repository up.
+  `.project-init.yml` records its version, the
   choices made and the files it manages (`managed`). At the end of a pull
   request that changes one of those files, ask the user whether to record
   the change as a deviation, with its reason and status: `generalize`

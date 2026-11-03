@@ -34,7 +34,7 @@ set -eu
 
 here=$(cd "$(dirname "$0")" && pwd)
 plugin=$(cd "$here/../../.." && pwd)
-release_url=https://github.com/gtolivier/agent-workflows/archive/refs/tags
+upstream=gtolivier/agent-workflows
 
 die() {
   echo "upgrade: $*" >&2
@@ -49,7 +49,7 @@ if [ $# -eq 3 ]; then
   [ "$2" = --base ] || usage
   base_plugin=$(cd "$3" 2>/dev/null && pwd) || die "--base $3: no such folder"
 fi
-for tool in git jq uv curl; do
+for tool in git jq uv; do
   command -v "$tool" >/dev/null || die "$tool is missing"
 done
 
@@ -101,7 +101,8 @@ mkdir -p "$work"
 trap rollback EXIT
 
 # The plugin of the version in the register: next to this one in Claude
-# Code's cache, else its release on GitHub.
+# Code's cache, else its release on GitHub, through gh: the repository is
+# private, and gh is logged in.
 if [ -z "$base_plugin" ]; then
   for d in "$plugin/../$from" "$HOME/.claude/plugins/cache/agent-workflows/project-init/$from"; do
     if [ -f "$d/.claude-plugin/plugin.json" ] && [ "$(jq -r .version "$d/.claude-plugin/plugin.json")" = "$from" ]; then
@@ -113,8 +114,12 @@ fi
 if [ -z "$base_plugin" ]; then
   echo "Downloading project-init $from..."
   mkdir -p "$work/release"
-  curl -fsSL "$release_url/project-init-v$from.tar.gz" | tar -xzf - -C "$work/release" ||
-    die "could not download project-init $from from $release_url: pass --base"
+  # To a file, not through a pipe: tar would hide a failed download.
+  { gh release download "project-init-v$from" -R "$upstream" --archive tar.gz \
+      -O "$work/release.tar.gz" &&
+    tar -xzf "$work/release.tar.gz" -C "$work/release"; } ||
+    die "could not download project-init $from from $upstream: pass --base"
+  rm -f "$work/release.tar.gz"
   base_plugin=$(echo "$work/release"/*/plugins/project-init)
 fi
 [ -d "$base_plugin/skills/$skill_name" ] || die "$base_plugin has no $skill_name skill"
@@ -165,7 +170,7 @@ json() { jq -Rn --arg s "$1" '$s'; }
 issue_state() {
   command -v gh >/dev/null || return 0
   [ -n "$1" ] || return 0
-  gh issue view "$1" -R gtolivier/agent-workflows --json state,stateReason \
+  gh issue view "$1" -R "$upstream" --json state,stateReason \
     --jq 'if .state == "OPEN" then "OPEN" else .stateReason end' 2>/dev/null || :
 }
 

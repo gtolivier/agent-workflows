@@ -35,10 +35,8 @@ under `[module]` in their `hugo.toml`, and get a version with
 
 ## Test-driven development
 
-The `/tdd:feature` skill of the
-[`tdd` plugin](https://github.com/gtolivier/agent-workflows) builds a
-feature test-first, one behavior at a time. Its conventions for this
-repository:
+The `/tdd:feature` skill of the `tdd` plugin builds a feature test-first,
+one behavior at a time. Its conventions for this repository:
 
 - **Test, lint, type-check and format commands:** those of the Commands
   section above.

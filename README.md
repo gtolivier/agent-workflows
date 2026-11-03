@@ -5,6 +5,16 @@ Reusable workflows for AI coding agents, packaged as
 
 ## Install
 
+The marketplace is a private GitHub repository. Claude Code clones it
+with the git credentials already stored on the machine, and never asks
+for them, so each machine needs them first, for an account that can read
+the repository: `gh auth login`, then `gh auth setup-git`; or an SSH key
+loaded in `ssh-agent`, with github.com in `known_hosts`. A `GITHUB_TOKEN`
+in the environment is not enough on its own. Without credentials, adding
+the marketplace fails, and the background auto-update fails without a
+message: the plugins stay at the version last fetched. See
+[Grant access to a private marketplace](https://code.claude.com/docs/en/plugins/host-marketplace#grant-access-to-a-private-marketplace).
+
 ```sh
 claude plugin marketplace add gtolivier/agent-workflows
 claude plugin install tdd@agent-workflows
