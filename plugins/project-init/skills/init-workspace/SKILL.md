@@ -64,3 +64,8 @@ An existing file is kept, never overwritten. A folder that already has a
 Later commits of the workspace's files go through `scripts/commit.sh <dir>
 --message "<conventional commit message>"`: it keeps the list of
 repositories up to date.
+
+`scripts/render.sh <dir> <out-dir>` writes the workspace's common layer —
+`AGENTS.md`, `DECISIONS.md`, `.gitignore` — as this version writes them,
+keeping its description and list of repositories: the upgrade skill
+merges from it.

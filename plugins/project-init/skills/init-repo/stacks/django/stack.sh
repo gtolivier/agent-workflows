@@ -39,16 +39,14 @@ stack_generate() {
   django_settings config/settings.py
   # Annotations for mypy's strict mode.
   replace_line manage.py 'def main():' 'def main() -> None:'
-  render "$STACK_DIR/test_settings.py" >config/tests.py
+  stack_render .
 
   # Local settings: .env.example is committed, .env (ignored by git) gets
   # a secret key of its own.
-  render "$STACK_DIR/env.example" >.env.example
   key=$(uv run --quiet python -c 'import secrets; print(secrets.token_urlsafe(50))')
   # Readable by its owner only: it holds the key.
   (umask 077 && awk -v key="$key" '/^DJANGO_SECRET_KEY=/ { print "DJANGO_SECRET_KEY=" key; next } { print }' \
     .env.example >.env)
-  render "$STACK_DIR/compose.yaml" >compose.yaml
 
   # Tool settings: no CLI writes them.
   render "$STACK_DIR/pyproject.toml" >>pyproject.toml
@@ -104,6 +102,17 @@ stack_render_env() {
   DB_NAME=$(printf '%s' "$NAME" | tr '[:upper:]' '[:lower:]' | tr -c 'a-z0-9\n' '_')
   export DB_NAME POSTGRES_VERSION
 }
+
+# The files rendered from this stack's templates into the folder $1: run
+# again by the upgrade skill, for the version that set a repository up and
+# for this one.
+stack_render() {
+  render_file "$STACK_DIR/test_settings.py" "$1/config/tests.py"
+  render_file "$STACK_DIR/env.example" "$1/.env.example"
+  render_file "$STACK_DIR/compose.yaml" "$1/compose.yaml"
+}
+# The rendered files in $1, fixed and formatted by the project's ruff.
+stack_format() { format_ruff "$1"; }
 
 # The CI checks a merge requires, one per line: the job names of ci.yml.
 stack_checks() {

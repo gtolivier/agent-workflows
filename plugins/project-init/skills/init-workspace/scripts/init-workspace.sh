@@ -28,23 +28,6 @@ die() {
   echo "init-workspace: $*" >&2
   exit 1
 }
-render() {
-  awk '{
-    out = ""; s = $0
-    while (match(s, /@[A-Z_]+@/)) {
-      out = out substr(s, 1, RSTART - 1) ENVIRON[substr(s, RSTART + 1, RLENGTH - 2)]
-      s = substr(s, RSTART + RLENGTH)
-    }
-    print out s
-  }' "$1"
-}
-q() { jq -Rn --arg s "$1" '$s'; }
-lang_name() {
-  case $1 in
-    en) echo English ;; fr) echo French ;; de) echo German ;;
-    es) echo Spanish ;; it) echo Italian ;; *) echo "$1" ;;
-  esac
-}
 # Write a file only if it does not exist yet.
 create() {
   if [ -e "$1" ]; then
@@ -123,28 +106,27 @@ cd "$dir"
 [ -d .git ] || git init --quiet --initial-branch=main
 echo "Workspace $dir:"
 
-{
-  cat "$skill/assets/gitignore"
-  if [ -n "$tracked" ]; then
-    echo "# Also tracked here (--track):"
-    printf '%s' "$tracked" | while IFS= read -r path; do echo "!/$path"; done
-  fi
-  echo "# Never: macOS folder metadata, in the tracked folders too."
-  echo ".DS_Store"
-} | create .gitignore
-
-if [ "$roadmap" = workspace ]; then
-  ROADMAP_TEXT="The roadmap of every repository is [\`ROADMAP.md\`](ROADMAP.md), in this
-folder: the next step comes from there."
-  printf '# Roadmap\n' | create ROADMAP.md
-else
-  ROADMAP_TEXT="Each repository keeps its own roadmap, in its \`ROADMAP.md\`: the next
-step of a repository comes from there."
-fi
-PR_LANG=$(lang_name "$pr_lang") ROADMAP_LANG=$(lang_name "$roadmap_lang")
-export NAME="$name" ROADMAP_TEXT PR_LANG ROADMAP_LANG
-render "$skill/assets/AGENTS.md" | create AGENTS.md
-create DECISIONS.md <"$skill/assets/DECISIONS.md"
+# The register first, then the files of the common layer it describes:
+# render.sh writes them as the upgrade skill renders them again later.
+version=$(jq -r .version "$skill/../../.claude-plugin/plugin.json" 2>/dev/null || echo unknown)
+tracked_list=$(printf '%s' "$tracked" | jq -R 'select(. != "")' | jq -sc .)
+register=$(jq -n --arg version "$version" --arg name "$name" --arg roadmap "$roadmap" \
+  --arg prs "$pr_lang" --arg roadmap_lang "$roadmap_lang" --argjson tracked "$tracked_list" \
+  --arg host "$host" --arg owner "$owner" --arg repo "$repo" --arg remote "$remote" '{
+    "project-init": $version, kind: "workspace", name: $name,
+    choices: {roadmap: $roadmap, language: {prs: $prs, roadmap: $roadmap_lang}, tracked: $tracked},
+    host: {kind: $host, owner: $owner, repo: $repo, remote: $remote},
+    managed: [".gitignore", "AGENTS.md", "DECISIONS.md", ".project-init.yml"], deviations: []
+  }')
+uv run --quiet --script "$here/register-edit.py" .project-init.yml load "$register"
+echo "  created  .project-init.yml"
+rendered=$(mktemp -d)
+trap 'rm -rf "$rendered"' EXIT
+sh "$here/render.sh" . "$rendered"
+for f in .gitignore AGENTS.md DECISIONS.md; do
+  create "$f" <"$rendered/$f"
+done
+[ "$roadmap" != workspace ] || printf '# Roadmap\n' | create ROADMAP.md
 
 # This machine's Claude Code settings for the workspace: commands that would
 # read or change credentials are denied; on GitHub, git authenticates with
@@ -161,27 +143,6 @@ chmod 600 .claude/settings.local.json
 if [ -n "$remote" ] && ! git remote get-url origin >/dev/null 2>&1; then
   git remote add origin "$remote"
 fi
-
-version=$(jq -r .version "$skill/../../.claude-plugin/plugin.json" 2>/dev/null || echo unknown)
-tracked_list=$(printf '%s' "$tracked" | jq -R 'select(. != "")' | jq -sc .)
-{
-  echo "# project-init register: the version that set this workspace up and the"
-  echo "# choices made. Read by project-init's scripts; record deviations from the"
-  echo "# common layer under \"deviations\"."
-  echo "project-init: $(q "$version")"
-  echo "kind: workspace"
-  echo "choices:"
-  echo "  roadmap: $(q "$roadmap")"
-  echo "  language: {prs: $(q "$pr_lang"), roadmap: $(q "$roadmap_lang")}"
-  echo "  tracked: $tracked_list"
-  echo "host:"
-  echo "  kind: $(q "$host")"
-  echo "  owner: $(q "$owner")"
-  echo "  repo: $(q "$repo")"
-  echo "  remote: $(q "$remote")"
-  echo 'managed: [".gitignore", "AGENTS.md", "DECISIONS.md", ".project-init.yml"]'
-  echo "deviations: []"
-} | create .project-init.yml
 
 sh "$here/repos.sh" "$dir"
 

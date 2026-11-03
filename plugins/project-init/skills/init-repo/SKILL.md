@@ -32,7 +32,7 @@ folder starting with `_` holds code the stacks share, not a stack.
 | `README.md` | the name and description, and a paragraph for you to write |
 | `ROADMAP.md` | unless the workspace keeps the roadmap |
 | `AGENTS.md` | the stack's commands and layout, the `/tdd:feature` conventions, and the rules: test-first (with `--tdd on`), dependencies, generated files, clean code, supported versions, language, common layer |
-| `.github/workflows/ci.yml` | on GitHub: the stack's checks |
+| `.github/workflows/ci.yml` | on GitHub: the stack's checks, and a gitleaks scan of the whole history |
 | `.coderabbit.yaml` | on GitHub, public repositories, unless `--no-coderabbit` |
 | `compose.yaml`, `.env.example`, `.env` | django: the local PostgreSQL, and the settings that differ between environments — `.env`, ignored by git, gets a secret key of its own |
 | `.nvmrc`, `.prettierignore`, `e2e/` | angular, hugo, hugo-theme: the Node major version, which the CI reads; the register (and for Hugo the Go templates), left out of Prettier; an accessibility test of the home page with axe |
@@ -116,6 +116,15 @@ folder starting with `_` holds code the stacks share, not a stack.
 `scripts/tdd.sh on <dir>` adds the Test-first rule to `AGENTS.md` and sets
 `choices.tdd` in `.project-init.yml`; `off` removes it. It commits nothing:
 the change goes through a pull request like any other.
+
+## Rendering the common layer
+
+`scripts/render.sh <dir> <out-dir>` writes the files of the common layer
+that the register of `<dir>` describes — formatted as the repository
+formats its own (Prettier or ruff) — into `<out-dir>`, as `init-repo.sh`
+wrote them. The upgrade skill renders them for two versions and merges
+the difference; a hugo site's theme comes from `theme.sh`, which records
+it in the register.
 
 ## Not covered yet
 

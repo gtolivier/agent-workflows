@@ -78,11 +78,7 @@ stack_generate() {
   replace_line src/app/app.ts "  protected readonly title = signal('$NAME');" ''
   echo '<router-outlet />' >src/app/app.html
   cp "$STACK_DIR/app.spec.ts" src/app/app.spec.ts
-  mkdir -p e2e
-  cp "$STACK_DIR/e2e-tsconfig.json" e2e/tsconfig.json
-  cp "$NODE_DIR/accessibility.spec.ts" e2e/accessibility.spec.ts
-  # The register is rewritten by project-init's scripts, not by Prettier.
-  printf '%s\n' .project-init.yml >.prettierignore
+  stack_render .
 
   npm pkg set description="$DESCRIPTION" \
     scripts.format='prettier --write .' \
@@ -120,10 +116,38 @@ eslint_config() {
 }
 
 # Variables for ci.yml and agents.md: ANGULAR_PRACTICES comes from
-# stack_generate.
+# stack_generate, or from stack_repo_env.
 stack_render_env() {
   :
 }
+
+# ANGULAR_PRACTICES from the AGENTS.md of the repository REPO_DIR, for an
+# upgrade: between the markers of agents.md, else (0.6.0 and before) the
+# text after the line "Written by `ng new --ai-config`…" up to the next
+# section. Kept as is: they change with Angular, not with project-init.
+stack_repo_env() {
+  f=$REPO_DIR/AGENTS.md
+  if [ -f "$f" ] && grep -qx '<!-- project-init:angular-practices -->' "$f"; then
+    ANGULAR_PRACTICES=$(awk '$0 == "<!-- /project-init:angular-practices -->" { p = 0 }
+      p; $0 == "<!-- project-init:angular-practices -->" { p = 1 }' "$f")
+  elif [ -z "${ANGULAR_PRACTICES-}" ] && [ -f "$f" ]; then
+    ANGULAR_PRACTICES=$(awk '/^Written by `ng new --ai-config`/ { p = 1; getline; next }
+      p && /^## / { exit } p' "$f")
+  fi
+  export ANGULAR_PRACTICES
+}
+
+# The files copied from this stack's templates into the folder $1: run
+# again by the upgrade skill, for the version that set a repository up and
+# for this one.
+stack_render() {
+  copy_file "$STACK_DIR/e2e-tsconfig.json" "$1/e2e/tsconfig.json"
+  copy_file "$(template accessibility.spec.ts)" "$1/e2e/accessibility.spec.ts"
+  # The register is rewritten by project-init's scripts, not by Prettier.
+  printf '%s\n' .project-init.yml >"$1/.prettierignore"
+}
+# The rendered files in $1, formatted by the project's Prettier.
+stack_format() { format_prettier "$1"; }
 
 # The CI checks a merge requires, one per line: the job names of ci.yml.
 stack_checks() {

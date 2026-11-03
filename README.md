@@ -180,7 +180,7 @@ passing test.
 
 ### `project-init` — a common layer for a machine and its repositories
 
-Four skills, each backed by scripts that do the work: official generators
+Five skills, each backed by scripts that do the work: official generators
 and CLIs (`uv`, `git`, `gh`) write the files, and Claude only asks the
 choices and writes the prose the scripts leave as `TODO(project-init)`.
 Every workspace and repository gets a register, `.project-init.yml`: the
@@ -218,7 +218,8 @@ through `/tdd:feature` is your choice: required from the start, or turned
 on later with the skill's `tdd.sh`. On GitHub, it
 adds the CI — lint, type check, and tests (Python: on the oldest and
 newest supported versions; Angular: unit and end-to-end, and the build;
-Hugo: the strict build, its HTML and links, and end-to-end)
+Hugo: the strict build, its HTML and links, and end-to-end) and a
+secret scan of the whole history with gitleaks
 — and, for a public repository, CodeRabbit. A
 repository can also live on another host or on this machine only. Its
 `commit.sh` makes the first commit only once no placeholder remains and
@@ -235,6 +236,19 @@ on a private repository need GitHub Pro.
 Languages: code, comments, documentation, commits and issues are always
 in English; pull requests, their comments and the roadmap may be in
 another language, asked for private repositories.
+
+**`upgrade`: bring a repository or workspace to the current version.**
+It renders the common layer twice — as the version in the register wrote
+it, and as the installed version writes it — and merges the difference
+into each file with `git merge-file`, so your own changes stay; the
+register is migrated first. A repository is upgraded on its branch
+`project-init/upgrade-<version>`, a workspace on its current branch, each
+independently: a repository's upgrade never reads its workspace, and the
+other way round. Whatever differs from the common layer is settled with
+you as a deviation, recorded with its reason: `generalize` (an issue
+proposes it to project-init), `local`, `temporary` (until a date) or
+`abandon` (project-init no longer manages the file). Files written by a
+generator (`package.json`, `pyproject.toml`…) are never rewritten.
 
 **`init-machine`: no secret leaves the machine through git.** Ask Claude
 Code to set up the machine (or run the skill's `scripts/install.sh`
