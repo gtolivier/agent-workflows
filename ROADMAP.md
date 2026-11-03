@@ -113,3 +113,50 @@ supports it), and can gather machines over SSH.
 - It lets agents prompt each other, which falls outside the plugin's
   guardrails (write zones, one orchestrator, the user's approval). How the
   two coexist must be checked first.
+
+## Multi-stack monorepo with project-init
+
+**Status:** not supported yet. Next on the list: a project with several
+stacks in one repository is coming soon.
+
+project-init already covers a monorepo with one stack, with or without a
+workspace above it: the workspace is optional. What it does not cover is
+one repository holding several stacks in subfolders — for example a django
+`backend/` and an angular `frontend/`.
+
+**What blocks**
+
+1. **One stack per repository.** `init-repo.sh` refuses a folder that is
+   not empty, so a second stack cannot be added to a repository it set up,
+   and each stack's generator writes at the repository's root.
+2. **The register.** `.project-init.yml` holds a single `stack` and its
+   `choices` (runtime…), and `managed` lists paths from the root.
+3. **The CI and the checks.** `ci.yml` runs one stack's checks at the
+   root; `commit.sh` and the upgrade's `finish.sh` run one `stack_check`.
+   A multi-stack repository needs a job per subfolder (its own working
+   directory, setup and cache), and the required checks of init-github's
+   ruleset follow those jobs.
+4. **The common layer.** `AGENTS.md` takes one stack's sections and rules;
+   `.gitignore` comes from one stack; the render for the upgrade formats
+   with one stack's tools (Prettier or ruff), from the root. Each stack's
+   own templates (`eslint.config.mjs`, `compose.yaml`, `e2e/`…) must land
+   in its subfolder.
+5. **Details.** A standalone repository has no `DECISIONS.md`; a
+   multi-stack one makes cross-stack decisions (the API between backend
+   and frontend) and may want one.
+
+**Plan**
+
+- Decide the register's shape: a list of stacks, each with its subfolder
+  and its choices, and how a register of one stack migrates to it (an
+  upgrade migration).
+- Let init-repo add a stack to a repository it set up, in a subfolder,
+  running the stack's generator there.
+- Render `AGENTS.md`, `.gitignore` and `ci.yml` from every stack: sections
+  per subfolder, one CI job per stack, the required checks listed for
+  init-github.
+- Run each stack's checks in its subfolder from `commit.sh` and
+  `finish.sh`, and render and format each stack's templates in its own
+  subfolder for the upgrade.
+- Verify it end to end with a django `backend/` and an angular
+  `frontend/`, then an upgrade from a single-stack register.
