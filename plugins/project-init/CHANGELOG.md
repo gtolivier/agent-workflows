@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.9.0](https://github.com/gtolivier/agent-workflows/compare/project-init-v0.8.0...project-init-v0.9.0) (2026-11-03)
+
+
+### Features
+
+* **project-init:** give the token link and local settings to a repository on its own ([#62](https://github.com/gtolivier/agent-workflows/issues/62)) ([be8ca71](https://github.com/gtolivier/agent-workflows/commit/be8ca71e349afec116cd828a656dab23acc51ad8))
+
 ## [0.8.0](https://github.com/gtolivier/agent-workflows/compare/project-init-v0.7.0...project-init-v0.8.0) (2026-11-03)
 
 
