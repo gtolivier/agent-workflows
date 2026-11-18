@@ -155,6 +155,17 @@ session stop. From a folder above the feature's repository, even a
 repository itself, it never relaunches you (see step 1). If the user abandons the feature, delete the checklist: while
 it says `running`, the hook keeps the loop alive.
 
+The hook relaunches only the session that runs the feature: the last one to
+write the checklist with its Write or Edit tool, which another hook records
+in `<git-dir>/tdd/<slug>.session`. Other sessions open in the same
+repository stop as usual; until a session writes the checklist, a feature
+started before this rule is relaunched in any session. So always change
+the `Status:` line with your Edit tool, never through the shell. When you
+resume a feature, that edit makes the session its owner; if the line
+already says `running` (its last session ended while it ran), change what
+follows `running` instead — add ` — resumed`, or remove it if it is
+already there — so that the edit still takes place.
+
 ## 4. One cycle per behavior
 
 Work through the unchecked behaviors in order, without stopping to report
@@ -551,6 +562,7 @@ asked again.
    <owner>/<repo>` for another repository's).
 4. Delete `<git-dir>/tdd/<slug>.md`, and if they exist
    `<git-dir>/tdd/<slug>.ralph` (the Stop hook's counter),
+   `<git-dir>/tdd/<slug>.session` (the session that runs the feature),
    `<git-dir>/tdd/<slug>.log` (`step.sh`'s output) and
    `<git-dir>/tdd/<slug>/` (the UI captures).
 5. **Hand over the next step.** Once the default branch is green — and

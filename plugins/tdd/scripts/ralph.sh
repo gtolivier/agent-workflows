@@ -15,6 +15,14 @@
 # it): its own running feature is relaunched as usual, and those of the
 # repositories below it are only reported.
 #
+# A feature is relaunched only in the session that runs it. Several sessions
+# may be open in the same repository, and each one's stop comes here: the
+# session id that ralph-owner.sh recorded in <git-dir>/tdd/<slug>.session,
+# when a session last wrote the checklist, names the feature's owner.
+# Another session is not blocked, and its stops leave the idle count alone:
+# they only report the feature. A feature with no .session file, started
+# before this check, is relaunched in any session, as it used to be.
+#
 # The hook only reads the checklist: it never runs the project's tests, so
 # no command written into the checklist escapes Claude Code's permissions.
 
@@ -31,6 +39,8 @@ input=$(cat)
 session_dir=$(printf '%s' "$input" |
   sed -n 's/.*"cwd"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' | head -n 1)
 [ -d "$session_dir" ] || session_dir=$PWD
+session_id=$(printf '%s' "$input" |
+  sed -n 's/.*"session_id"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' | head -n 1)
 
 json_escape() { printf '%s' "$1" | sed -e 's/\\/\\\\/g' -e 's/"/\\"/g'; }
 
@@ -96,6 +106,20 @@ git_dir=$(git -C "$repo" rev-parse --absolute-git-dir)
 slug=${branch#feature/}
 checklist="$git_dir/tdd/$slug.md"
 state="$git_dir/tdd/$slug.ralph"
+owner_file="$git_dir/tdd/$slug.session"
+
+where=$(json_escape "$branch in $repo")
+
+# Another session runs this feature: let this one stop, and keep the idle
+# count for the owner.
+if [ -n "$session_id" ] && [ -f "$owner_file" ]; then
+  owner=$(head -n 1 "$owner_file")
+  if [ -n "$owner" ] && [ "$owner" != "$session_id" ]; then
+    printf '{"systemMessage": "tdd: %s is running in another session, so the Stop hook does not relaunch this one. To take the feature over here, ask this session to resume it."}\n' \
+      "$where"
+    exit 0
+  fi
+fi
 
 ticked=$(grep -c '^- \[x\]' "$checklist")
 remaining=$(grep -c '^- \[ \]' "$checklist")
@@ -106,7 +130,6 @@ blocks=0
 [ -f "$state" ] && read -r last_progress blocks <"$state"
 [ "$progress" = "$last_progress" ] || blocks=0
 
-where=$(json_escape "$branch in $repo")
 done_count="$ticked of $((ticked + remaining)) behaviors ticked"
 
 if [ "$blocks" -ge "$MAX_IDLE_BLOCKS" ]; then

@@ -128,7 +128,14 @@ folder, the hook never relaunches: it cannot tell which session runs a
 feature found there, and only reports the running features. That folder
 may be a repository itself — a workspace repository that ignores the ones
 below it: the hook then relaunches that repository's own feature, and only
-reports those below. It lets the
+reports those below. It relaunches only the session that runs the
+feature: a `PostToolUse` hook on `Write` and `Edit` records, in
+`<git-dir>/tdd/<slug>.session`, the session that last wrote the checklist
+with one of those tools — the one that created it, or one that resumed it
+and set its status back to `running`. Other sessions open in the same
+repository stop as usual and leave the feature's idle count alone; a
+feature started before this check, with no such file, is relaunched in any
+session. It lets the
 session stop whenever the skill waits for you or for CI and reviews. The
 hook only reads the checklist — it never runs a command — and does nothing
 outside a running `/tdd:feature`.
