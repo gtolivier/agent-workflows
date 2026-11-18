@@ -158,11 +158,13 @@ it says `running`, the hook keeps the loop alive.
 The hook relaunches only the session that runs the feature: the last one to
 write the checklist with its Write or Edit tool, which another hook records
 in `<git-dir>/tdd/<slug>.session`. Other sessions open in the same
-repository stop as usual. So always change the `Status:` line with your
-Edit tool, never through the shell. When you resume a feature, that edit
-makes the session its owner; if the line already says `running` (its last
-session ended while it ran), set it to `Status: running — resumed`
-instead, so that the edit still takes place.
+repository stop as usual; until a session writes the checklist, a feature
+started before this rule is relaunched in any session. So always change
+the `Status:` line with your Edit tool, never through the shell. When you
+resume a feature, that edit makes the session its owner; if the line
+already says `running` (its last session ended while it ran), change what
+follows `running` instead — add ` — resumed`, or remove it if it is
+already there — so that the edit still takes place.
 
 ## 4. One cycle per behavior
 

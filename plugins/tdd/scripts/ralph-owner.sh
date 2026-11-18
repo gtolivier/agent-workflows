@@ -30,6 +30,8 @@ field() {
     head -n 1
 }
 
+json_escape() { printf '%s' "$1" | sed -e 's/\\/\\\\/g' -e 's/"/\\"/g'; }
+
 session_id=$(field session_id)
 case $session_id in '' | *[!A-Za-z0-9_-]*) exit 0 ;; esac
 
@@ -49,7 +51,10 @@ owner_file="$tdd_dir/$slug.session"
 [ "$(head -n 1 "$owner_file" 2>/dev/null)" = "$session_id" ] && exit 0
 
 # A new owner starts with a fresh idle count: the relaunches the previous
-# owner used up are not its own.
-rm -f "$tdd_dir/$slug.ralph"
-printf '%s\n' "$session_id" >"$owner_file" 2>/dev/null || true
+# owner used up are not its own. No owner without that fresh count.
+if ! { rm -f "$tdd_dir/$slug.ralph" &&
+  printf '%s\n' "$session_id" >"$owner_file"; } 2>/dev/null; then
+  printf '{"systemMessage": "tdd: cannot record this session as the owner of the %s feature in %s, so the Stop hook keeps relaunching the session that ran it before."}\n' \
+    "$(json_escape "$slug")" "$(json_escape "$tdd_dir")"
+fi
 exit 0
